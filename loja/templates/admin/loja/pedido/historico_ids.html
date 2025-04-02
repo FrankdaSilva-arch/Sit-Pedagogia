@@ -1,0 +1,111 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    <style>
+        .historico-container {
+            margin: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .historico-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .historico-table th,
+        .historico-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .historico-table th {
+            background-color: #f5f5f5;
+            font-weight: bold;
+        }
+        .historico-table tr:hover {
+            background-color: #f9f9f9;
+        }
+        .btn-voltar {
+            display: inline-block;
+            padding: 8px 15px;
+            background-color: #79aec8;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .btn-voltar:hover {
+            background-color: #609ab6;
+        }
+        .btn-deletar {
+            padding: 4px 8px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .btn-deletar:hover {
+            background-color: #c82333;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="historico-container">
+        <a href="{% url 'admin:loja_pedido_changelist' %}" class="btn-voltar">Voltar para Lista de Pedidos</a>
+        
+        <h2>Histórico de Alterações de ID</h2>
+        
+        <table class="historico-table">
+            <thead>
+                <tr>
+                    <th>ID Original</th>
+                    <th>Novo ID</th>
+                    <th>Data da Alteração</th>
+                    <th>Usuário</th>
+                    <th>Pedido</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for registro in historico %}
+                    <tr>
+                        <td>{{ registro.id_original }}</td>
+                        <td>{{ registro.id_novo }}</td>
+                        <td>{{ registro.data_alteracao|date:"d/m/Y H:i" }}</td>
+                        <td>{{ registro.usuario.username }}</td>
+                        <td>
+                            {% if registro.pedido %}
+                                <a href="{% url 'admin:loja_pedido_change' registro.pedido.id %}">
+                                    Pedido #{{ registro.pedido.id }}
+                                </a>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            <form method="post" action="{% url 'admin:loja_historicoid_changelist' %}" style="display: inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="marcar_como_deletado">
+                                <input type="hidden" name="_selected_action" value="{{ registro.id }}">
+                                <button type="submit" class="btn-deletar" onclick="return confirm('Tem certeza que deseja marcar este registro como deletado?')">
+                                    Deletar
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6" style="text-align: center;">Nenhum registro encontrado.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %} 

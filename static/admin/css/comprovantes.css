@@ -1,0 +1,97 @@
+.comprovantes-container {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    align-items: flex-start;
+}
+
+.comprovante-item {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.comprovante-link {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+    color: #447e9b;
+}
+
+.comprovante-imagem {
+    max-width: 100px;
+    max-height: 100px;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.pdf-icon {
+    width: 40px;
+    height: 50px;
+    background: #dc3545;
+    position: relative;
+    margin-right: 10px;
+    border-radius: 2px;
+}
+
+.pdf-icon-corner {
+    position: absolute;
+    top: 0;
+    right: 0;
+    border-style: solid;
+    border-width: 0 15px 15px 0;
+    border-color: #fff #dc3545 #dc3545 #fff;
+}
+
+.pdf-icon-text {
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    text-align: center;
+    padding-top: 15px;
+}
+
+.pdf-label {
+    font-size: 14px;
+    color: #447e9b;
+}
+
+.comprovante-link:hover {
+    text-decoration: underline;
+}
+
+/* Estilo para links na lista */
+.column-nome_comprador_link a {
+    color: #2c3e50;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.column-nome_comprador_link a:hover {
+    color: #3498db;
+    text-decoration: underline;
+}
+
+/* Estilo para o status */
+.column-status_colorido a {
+    padding: 4px 8px;
+}
+
+/* Melhorias na tabela do admin */
+#result_list {
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+#result_list thead th {
+    background: #f8f9fa;
+    padding: 12px 8px;
+}
+
+#result_list tbody td {
+    padding: 12px 8px;
+}
+
+#result_list tr:hover {
+    background-color: #f8f9fa;
+} 

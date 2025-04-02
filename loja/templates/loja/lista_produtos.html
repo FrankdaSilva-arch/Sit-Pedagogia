@@ -1,0 +1,392 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Formandos Pedagogia 2027</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        header h1 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+        header p {
+            color: #666;
+            font-size: 1.2em;
+        }
+        .header-buttons {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+        .btn-visualizar {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 16px;
+        }
+        .btn-visualizar:hover {
+            background-color: #45a049;
+        }
+        .produtos {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .produto-imagem {
+            width: 100%;
+            height: 200px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .produto-imagem img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .preco {
+            font-size: 1.2em;
+            color: #2c5282;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .btn-comprar {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .btn-comprar:hover {
+            background-color: #45a049;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 20px;
+            border-radius: 5px;
+            width: 80%;
+            max-width: 500px;
+            position: relative;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .btn-confirmar {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .mensagem-erro {
+            color: #dc3545;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            padding: 8px;
+            margin-top: 5px;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .cota-invalida {
+            border-color: #dc3545 !important;
+        }
+
+        #cota-mensagem {
+            color: #dc3545;
+            font-size: 0.9em;
+            margin-top: 5px;
+            display: block;
+        }
+
+        .btn-confirmar:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .close-modal {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .close-modal:hover {
+            color: #333;
+        }
+
+        .ui-autocomplete {
+            max-height: 200px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            z-index: 1001;
+        }
+        .ui-menu-item {
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        .ui-menu-item:hover {
+            background-color: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Formandos do Curso de Pedagogia para 2027</h1>
+            <p>Loja Virtual da Turma</p>
+        </header>
+
+        {% if user.is_staff %}
+        <div class="header-buttons">
+            <a href="{% url 'admin:index' %}" class="btn-visualizar">Administrador</a>
+            <a href="{% url 'loja:visualizar_pagamentos' %}" class="btn-visualizar">Visualizar Pagamentos</a>
+        </div>
+        {% endif %}
+
+        <div class="produtos">
+            {% if produtos %}
+                {% for produto in produtos %}
+                    <div class="card">
+                        <h2>{{ produto.nome }}</h2>
+                        {% if produto.imagem %}
+                            <img src="{{ produto.imagem.url }}" 
+                                 alt="{{ produto.nome }}"
+                                 style="max-width: 300px;">
+                        {% else %}
+                            <p>Sem imagem</p>
+                        {% endif %}
+                        <p class="preco">R$ {{ produto.preco }}</p>
+                        <p>{{ produto.descricao }}</p>
+                        <p>Em estoque: {{ produto.estoque }}</p>
+                        <form method="post" action="{% url 'loja:confirmar_compra' produto.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-comprar">Comprar</button>
+                        </form>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p style="text-align: center; grid-column: 1/-1;">
+                    Nenhum produto cadastrado ainda.
+                </p>
+            {% endif %}
+        </div>
+
+        {% if debug %}
+        <div style="background: #fff3cd; padding: 10px; margin: 10px;">
+            <h3>Debug Info:</h3>
+            <p>Total de Produtos: {{ produtos|length }}</p>
+            <p>URL atual: {{ request.path }}</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Modal de Compra -->
+    <div id="modalCompra" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Confirmar Compra</h2>
+            <form id="formCompra" method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="nome_comprador">Nome do Comprador:</label>
+                    <input type="text" id="nome_comprador" name="nome_comprador" class="nome-comprador" required>
+                </div>
+                <div class="form-group">
+                    <label for="cota">Número da Cota:</label>
+                    <input type="number" id="cota" name="cota" required min="1">
+                    <span id="cota-mensagem" class="mensagem-erro"></span>
+                </div>
+                <button type="submit" class="btn-confirmar" id="btn-confirmar">Confirmar Compra</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            var produtoId;
+            var btnConfirmar = $('#btn-confirmar');
+
+            $('.btn-comprar').click(function(e) {
+                e.preventDefault();
+                var form = $(this).closest('form');
+                produtoId = form.attr('action').split('/')[2]; // Extrai o ID do produto da URL
+                $('#formCompra').attr('action', form.attr('action'));
+                $('#modalCompra').show();
+                // Limpa os campos e mensagens ao abrir o modal
+                $('#nome_comprador').val('');
+                $('#cota').val('');
+                $('#cota-mensagem').hide();
+                btnConfirmar.prop('disabled', false);
+            });
+
+            $('.close-modal').click(function() {
+                $('#modalCompra').hide();
+            });
+
+            $(window).click(function(e) {
+                if (e.target == document.getElementById('modalCompra')) {
+                    $('#modalCompra').hide();
+                }
+            });
+
+            // Validação da cota em tempo real
+            $('#cota').on('input', function() {
+                var cota = $(this).val();
+                var cotaMensagem = $('#cota-mensagem');
+                var nomeComprador = $('#nome_comprador').val();
+                
+                if (cota) {
+                    // Faz a requisição para verificar a cota
+                    $.get(`/produto/${produtoId}/verificar-cota/${cota}/`, { nome_comprador: nomeComprador }, function(response) {
+                        cotaMensagem.show();
+                        
+                        if (response.cota_ocupada) {
+                            cotaMensagem.text(response.mensagem);
+                            if (response.mensagem === 'Você já comprou essa cota') {
+                                cotaMensagem.css('color', '#28a745');
+                            } else {
+                                cotaMensagem.css('color', '#dc3545');
+                            }
+                            btnConfirmar.prop('disabled', true);
+                        } else if (response.pedido_pendente) {
+                            cotaMensagem.text(response.mensagem);
+                            cotaMensagem.css('color', '#ffc107');
+                            btnConfirmar.prop('disabled', true);
+                            // Redireciona para a página de pagamento do pedido pendente
+                            window.location.href = `/produto/${response.produto_id}/pagamento/${response.pedido_id}/`;
+                        } else if (response.cota_disponivel) {
+                            cotaMensagem.text(response.mensagem);
+                            cotaMensagem.css('color', '#28a745');
+                            btnConfirmar.prop('disabled', false);
+                        }
+                    });
+                } else {
+                    cotaMensagem.hide();
+                    btnConfirmar.prop('disabled', false);
+                }
+            });
+
+            // Quando o formulário for submetido
+            $('#formCompra').submit(function(e) {
+                e.preventDefault();
+                var nome_comprador = $('#nome_comprador').val();
+                var cota = $('#cota').val();
+
+                // Envia o formulário via AJAX
+                $.ajax({
+                    url: $(this).attr('action'),
+                    method: 'POST',
+                    data: {
+                        nome_comprador: nome_comprador,
+                        cota: cota,
+                        csrfmiddlewaretoken: '{{ csrf_token }}'
+                    },
+                    success: function(response) {
+                        // Redireciona para a página de pagamento
+                        window.location.href = response.redirect_url;
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Erro ao confirmar compra:', error);
+                        alert('Erro ao confirmar compra. Por favor, tente novamente.');
+                    }
+                });
+            });
+
+            // Inicializa o autocompletar no campo de nome do comprador
+            $('.nome-comprador').autocomplete({
+                source: function(request, response) {
+                    $.ajax({
+                        url: "{% url 'loja:buscar_compradores' %}",
+                        dataType: "json",
+                        data: {
+                            term: request.term
+                        },
+                        success: function(data) {
+                            console.log('Sugestões de compradores:', data);
+                            response(data);
+                        }
+                    });
+                },
+                minLength: 1,
+                delay: 300,
+                select: function(event, ui) {
+                    console.log('Comprador selecionado:', ui.item.value);
+                    // Envia uma requisição para registrar o comprador selecionado
+                    $.ajax({
+                        url: "{% url 'loja:registrar_comprador_selecionado' %}",
+                        method: 'POST',
+                        data: {
+                            nome: ui.item.value,
+                            csrfmiddlewaretoken: '{{ csrf_token }}'
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html> 

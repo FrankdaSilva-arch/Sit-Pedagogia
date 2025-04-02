@@ -1,0 +1,192 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ produto.nome }}</title>
+    <link rel="stylesheet" href="{% static 'css/estilos.css' %}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-md-6">
+                {% if produto.imagem %}
+                <img src="{{ produto.imagem.url }}" alt="{{ produto.nome }}" class="img-fluid">
+                {% endif %}
+            </div>
+            <div class="col-md-6">
+                <h2>{{ produto.nome }}</h2>
+                <p class="lead">{{ produto.descricao }}</p>
+                <p class="h3">R$ {{ produto.preco }}</p>
+                
+                <div id="mensagens" class="messages mb-3">
+                    {% if messages %}
+                        {% for message in messages %}
+                            {% if message.tags != 'success' or 'Removido' not in message.message %}
+                            <div class="alert alert-{{ message.tags }}">
+                                {{ message }}
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                
+                <form id="formCompra" onsubmit="event.preventDefault(); verificarCota();">
+                    {% csrf_token %}
+                    <input type="hidden" id="produto_id" value="{{ produto.id }}">
+                    <div class="form-group">
+                        <label for="nome_comprador">Nome do Comprador:</label>
+                        <input type="text" class="form-control" id="nome_comprador" required autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="cota">Número da Cota:</label>
+                        <input type="number" 
+                               class="form-control" 
+                               id="cota" 
+                               min="{{ produto.cota_inicial }}" 
+                               max="{{ produto.cota_final }}" 
+                               step="1"
+                               required
+                               oninput="validarCota(this)">
+                        <small class="form-text text-muted">Cota deve estar entre {{ produto.cota_inicial }} e {{ produto.cota_final }}</small>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Continuar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Adicionar jQuery e jQuery UI -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Script carregado');
+            
+            // Configuração do autocomplete
+            $("#nome_comprador").autocomplete({
+                source: "{% url 'loja:buscar_compradores' %}",
+                minLength: 2,
+                select: function(event, ui) {
+                    $(this).val(ui.item.label);
+                    return false;
+                }
+            });
+
+            // Validação inicial da cota
+            const cotaInput = document.getElementById('cota');
+            validarCota(cotaInput);
+        });
+
+        function validarCota(input) {
+            const cota = input.value;
+            const min = parseInt(input.min);
+            const max = parseInt(input.max);
+            
+            // Remove caracteres não numéricos
+            input.value = input.value.replace(/[^0-9]/g, '');
+            
+            if (cota) {
+                const numCota = parseInt(cota);
+                
+                // Se o número for menor que o mínimo, ajusta para o mínimo
+                if (numCota < min) {
+                    input.value = min;
+                    exibirMensagem(`A cota mínima é ${min}`, 'warning');
+                }
+                // Se o número for maior que o máximo, ajusta para o máximo
+                else if (numCota > max) {
+                    input.value = max;
+                    exibirMensagem(`A cota máxima é ${max}`, 'warning');
+                }
+                // Se estiver dentro do range, mostra mensagem de sucesso
+                else {
+                    exibirMensagem('Cota válida', 'success');
+                }
+            }
+        }
+
+        function verificarCota() {
+            console.log('Função verificarCota chamada');
+            
+            const cota = document.getElementById('cota').value;
+            const nomeComprador = document.getElementById('nome_comprador').value;
+            const produtoId = document.getElementById('produto_id').value;
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            
+            console.log('Dados coletados:', {
+                cota: cota,
+                nomeComprador: nomeComprador,
+                produtoId: produtoId
+            });
+            
+            if (!cota || !nomeComprador) {
+                console.log('Campos vazios detectados');
+                exibirMensagem('Por favor, preencha todos os campos', 'danger');
+                return;
+            }
+            
+            // Criar URLSearchParams para enviar os dados
+            const formData = new URLSearchParams();
+            formData.append('produto_id', produtoId);
+            formData.append('cota', cota);
+            formData.append('nome_comprador', nomeComprador);
+            formData.append('csrfmiddlewaretoken', csrfToken);
+            
+            console.log('Enviando requisição para /verificar-cota/');
+            
+            fetch('/verificar-cota/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': csrfToken
+                },
+                body: formData.toString()
+            })
+            .then(response => {
+                console.log('Resposta recebida:', response);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Dados recebidos:', data);
+                if (data.success) {
+                    console.log('Exibindo mensagem:', data.message);
+                    exibirMensagem(data.message, 'success');
+                    if (data.redirect_url) {
+                        console.log('Redirecionando para:', data.redirect_url);
+                        // Aguarda 2 segundos antes do redirecionamento
+                        setTimeout(() => {
+                            console.log('Iniciando redirecionamento...');
+                            window.location.href = data.redirect_url;
+                        }, 2000);
+                    }
+                } else {
+                    console.log('Mensagem de erro:', data.message);
+                    exibirMensagem(data.message, 'danger');
+                    // Se a mensagem for sobre cota já comprada, destaca o campo
+                    if (data.message.includes('já comprou esta cota')) {
+                        document.getElementById('cota').classList.add('is-invalid');
+                        document.getElementById('nome_comprador').classList.add('is-invalid');
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Erro na requisição:', error);
+                exibirMensagem('Erro ao verificar cota', 'danger');
+            });
+        }
+
+        function exibirMensagem(mensagem, tipo) {
+            const mensagensDiv = document.getElementById('mensagens');
+            mensagensDiv.innerHTML = `<div class="alert alert-${tipo} alert-dismissible fade show" role="alert">
+                ${mensagem}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>`;
+        }
+    </script>
+</body>
+</html> 

@@ -1,0 +1,220 @@
+/* Estilo geral da tabela */
+#result_list {
+    border-collapse: collapse;
+    width: 100%;
+    background: white;
+    table-layout: auto; /* Mudado para auto para permitir ajuste dinâmico */
+}
+
+/* Linhas e células */
+#result_list tr {
+    height: 35px; /* Altura fixa para todas as linhas */
+}
+
+/* Centralização de todas as colunas, incluindo cabeçalhos */
+#result_list thead th,
+#result_list tbody td {
+    padding: 5px;
+    border: 1px solid #ddd;
+    vertical-align: middle;
+    line-height: 1.2;
+    font-size: 13px;
+    text-align: center;
+    white-space: normal; /* Permite quebra de linha */
+    word-wrap: break-word; /* Quebra palavras longas */
+}
+
+/* Cabeçalho */
+#result_list thead th {
+    background-color: #f5f5f5;
+    font-weight: bold;
+    color: #333;
+}
+
+/* Ajuste específico para coluna ID */
+.column-id,
+#result_list thead th.column-id,
+#result_list tbody td.column-id {
+    width: 40px !important;
+    min-width: 40px !important;
+    text-align: center !important;
+    padding: 5px !important;
+}
+
+/* Força o alinhamento do link dentro da coluna ID */
+.column-id a {
+    text-align: center !important;
+    display: block !important;
+    width: 100% !important;
+}
+
+/* Ajuste do cabeçalho ID */
+#result_list thead th.column-id {
+    text-align: center !important;
+    vertical-align: middle !important;
+}
+
+/* Ajuste das células ID */
+#result_list tbody td.column-id {
+    text-align: center !important;
+    vertical-align: middle !important;
+}
+
+/* Remove qualquer padding adicional que possa afetar o alinhamento */
+.column-id * {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* Garante que todos os números tenham o mesmo espaçamento */
+.column-id {
+    font-family: monospace !important; /* Usa fonte monospace para alinhar números */
+}
+
+.column-nome_comprador_link {
+    min-width: 150px; /* Largura mínima para nomes */
+    max-width: none; /* Remove limite máximo */
+}
+
+.column-produto {
+    min-width: 120px;
+}
+
+.column-cota,
+#result_list thead th.column-cota,
+#result_list tbody td.column-cota {
+    text-align: center !important;
+    width: 60px;
+    min-width: 60px;
+}
+
+.column-valor,
+#result_list thead th.column-valor,
+#result_list tbody td.column-valor {
+    text-align: center !important;
+    width: 80px;
+    min-width: 80px;
+    font-family: monospace;
+}
+
+.column-status {
+    width: 120px; /* Largura fixa para status */
+    min-width: 120px;
+}
+
+.column-data {
+    width: 100px; /* Largura fixa para data */
+    min-width: 100px;
+}
+
+.column-icone_comprovante {
+    width: 80px; /* Largura fixa para ícones */
+    min-width: 80px;
+}
+
+/* Linhas alternadas */
+#result_list tbody tr:nth-child(even) {
+    background-color: #fafafa;
+}
+
+/* Hover nas linhas */
+#result_list tbody tr:hover {
+    background-color: #f0f0f0;
+}
+
+/* Mantém o select do status com tamanho fixo */
+select[name*="status"] {
+    width: 90%;
+    padding: 2px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    text-align: center;
+    text-align-last: center;
+    cursor: pointer;
+    background-color: white;
+    z-index: 1;
+    position: relative;
+}
+
+/* Ajuste dos links de nome */
+.column-nome_comprador_link a {
+    color: #2c3e50;
+    text-decoration: none;
+    display: inline-block; /* Mudado para inline-block */
+    text-align: center;
+    padding: 0 5px;
+    width: auto; /* Largura automática */
+}
+
+/* Ícones de comprovante */
+.icones-comprovantes {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+}
+
+.icone-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+}
+
+/* Prevenir quebra de texto */
+#result_list td,
+#result_list th {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Ajuste dos ícones */
+.icone-pdf i,
+.icone-imagem i {
+    font-size: 16px;
+}
+
+/* Cores dos status */
+select[name*="status"] option[value="AGUARDANDO_PAGAMENTO"] {
+    color: #f39c12;
+}
+
+select[name*="status"] option[value="PAGO"] {
+    color: #27ae60;
+}
+
+select[name*="status"] option[value="CANCELADO"] {
+    color: #e74c3c;
+}
+
+/* Ajuste para responsividade */
+@media screen and (max-width: 1200px) {
+    #result_list {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+}
+
+/* Ajuste do texto dentro das células */
+#result_list td, 
+#result_list th {
+    padding-left: 5px; /* Pequeno padding à esquerda para não colar no bordo */
+}
+
+/* Estilos para os ícones de comprovante */
+.icones-comprovantes {
+    display: flex;
+    gap: 5px;
+    justify-content: center;
+    align-items: center;
+}
+
+.icone-link {
+    text-decoration: none;
+    display: inline-flex;
+    align- 
+
+/* Estilo para linhas com status "Pago" */
+tr 

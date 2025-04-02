@@ -1,0 +1,52 @@
+/* Estilo para superusuário */
+tr.field-is_superuser td,
+tr.has_original td {
+    color: #800080; /* Cor roxa */
+    font-weight: bold;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    font-size: 1.1em;
+}
+
+/* Estilo para o texto "Sim" na coluna de superusuário */
+tr.field-is_superuser td:last-child,
+tr.has_original td:last-child {
+    color: #800080;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    font-size: 1.1em;
+}
+
+/* Estilo específico para o nome do superusuário */
+tr.has_original td.field-username {
+    color: #800080;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    font-size: 1.2em;
+    padding: 8px;
+    background: linear-gradient(45deg, rgba(128,0,128,0.1), rgba(128,0,128,0.2));
+    border-radius: 4px;
+}
+
+/* Estilo para destacar a linha inteira do superusuário */
+tr.has_original {
+    background: linear-gradient(45deg, rgba(128,0,128,0.05), rgba(128,0,128,0.1));
+    border: 1px solid rgba(128,0,128,0.3);
+    box-shadow: 0 2px 4px rgba(128,0,128,0.1);
+}
+
+/* Efeito hover na linha do superusuário */
+tr.has_original:hover {
+    background: linear-gradient(45deg, rgba(128,0,128,0.1), rgba(128,0,128,0.2));
+    transition: all 0.3s ease;
+}
+
+/* Ícone de superusuário */
+tr.has_original td.field-username a::before {
+    content: "👑";
+    margin-right: 8px;
+    font-size: 1.2em;
+    vertical-align: middle;
+    display: inline-block;
+    position: relative;
+    top: 2px;
+} 

@@ -1,0 +1,139 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Buscar Pedido Pendente</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .search-form {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .btn-buscar {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .btn-buscar:hover {
+            background-color: #45a049;
+        }
+        .pedidos-list {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .pedido-item {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+        .pedido-item h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .pedido-info {
+            margin: 10px 0;
+        }
+        .btn-continuar {
+            background-color: #4CAF50;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-continuar:hover {
+            background-color: #45a049;
+        }
+        .mensagem {
+            text-align: center;
+            padding: 20px;
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Buscar Pedido Pendente</h1>
+            <p>Digite seu nome para encontrar seus pedidos pendentes de pagamento</p>
+        </header>
+
+        <div class="search-form">
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="nome_comprador">Nome do Comprador:</label>
+                    <input type="text" id="nome_comprador" name="nome_comprador" required>
+                </div>
+                <button type="submit" class="btn-buscar">Buscar Pedidos</button>
+            </form>
+        </div>
+
+        {% if nome_buscado %}
+            {% if pedidos %}
+                <div class="pedidos-list">
+                    <h2>Pedidos Pendentes para "{{ nome_buscado }}"</h2>
+                    {% for pedido in pedidos %}
+                        <div class="pedido-item">
+                            <h3>Pedido #{{ pedido.id }}</h3>
+                            <div class="pedido-info">
+                                <p><strong>Produto:</strong> {{ pedido.produto.nome }}</p>
+                                <p><strong>Cota:</strong> {{ pedido.cota }}</p>
+                                <p><strong>Valor:</strong> R$ {{ pedido.produto.preco }}</p>
+                                <p><strong>Data do Pedido:</strong> {{ pedido.data_pedido|date:"d/m/Y H:i" }}</p>
+                            </div>
+                            <a href="{% url 'loja:pagamento' pedido.id %}" class="btn-continuar">Continuar Pagamento</a>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="mensagem">
+                    <p>Nenhum pedido pendente encontrado para "{{ nome_buscado }}"</p>
+                </div>
+            {% endif %}
+        {% endif %}
+    </div>
+</body>
+</html> 

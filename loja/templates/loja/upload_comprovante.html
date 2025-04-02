@@ -1,0 +1,45 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Enviar Comprovante de Pagamento - Cota {{ pedido.cota }}</title>
+    <link rel="stylesheet" href="{% static 'css/estilos.css' %}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    <div class="container">
+        <div class="upload-container">
+            <h1>Enviar Comprovante de Pagamento</h1>
+            
+            <div class="pedido-info">
+                <h2>Informações do Pedido</h2>
+                <p><strong>Cota:</strong> {{ pedido.cota }}</p>
+                <p><strong>Comprador:</strong> {{ pedido.nome_comprador }}</p>
+                <p><strong>Valor:</strong> R$ {{ pedido.valor }}</p>
+                <p><strong>Data:</strong> {{ pedido.data|date:"d/m/Y H:i" }}</p>
+            </div>
+
+            <form method="post" enctype="multipart/form-data" class="upload-form">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="{{ form.arquivo.id_for_label }}">Selecione o comprovante:</label>
+                    {{ form.arquivo }}
+                    {% if form.arquivo.errors %}
+                        <div class="error-message">{{ form.arquivo.errors }}</div>
+                    {% endif %}
+                </div>
+                <button type="submit" class="btn-submit">Enviar Comprovante</button>
+            </form>
+
+            <div class="instrucoes">
+                <h3>Instruções:</h3>
+                <ul>
+                    <li>Envie o comprovante em formato PDF</li>
+                    <li>Certifique-se que o valor e a data estejam visíveis</li>
+                    <li>Tamanho máximo do arquivo: 5MB</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 

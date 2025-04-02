@@ -1,0 +1,36 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Pagamentos Confirmados - Pedagogia 2027</title>
+    <link rel="stylesheet" href="{% static 'css/estilos.css' %}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Pagamentos Confirmados</h1>
+            <div class="subtitulo">Formandos do Curso de Pedagogia para 2027</div>
+        </header>
+
+        <div class="lista-pagamentos">
+            {% if pagamentos %}
+                <ul class="pagamentos">
+                    {% for pagamento in pagamentos %}
+                        <li class="pagamento-item">
+                            <div class="pagamento-info">
+                                <span class="nome">{{ pagamento.nome_comprador }}</span>
+                                <span class="cota">Cota: {{ pagamento.cota }}</span>
+                                <span class="valor">R$ {{ pagamento.valor|floatformat:2 }}</span>
+                                <span class="data">{{ pagamento.data|date:"d/m/Y H:i" }}</span>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="sem-pagamentos">Nenhum pagamento confirmado ainda.</p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html> 

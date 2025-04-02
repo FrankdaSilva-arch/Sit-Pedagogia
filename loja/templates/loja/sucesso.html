@@ -1,0 +1,19 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Comprovante Enviado com Sucesso</title>
+    <link rel="stylesheet" href="{% static 'css/estilos.css' %}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    <div class="container">
+        <div class="sucesso-mensagem">
+            <h1>✓</h1>
+            <h2>Comprovante Enviado com Sucesso!</h2>
+            <p>Seu comprovante foi recebido e será analisado em breve.</p>
+            <a href="{% url 'loja:lista_produtos' %}" class="btn-voltar">Voltar para a Loja</a>
+        </div>
+    </div>
+</body>
+</html> 
