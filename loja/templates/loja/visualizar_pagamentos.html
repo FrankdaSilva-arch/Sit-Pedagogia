@@ -8,22 +8,14 @@
     <h1 class="text-center mb-4">Visualizar Pagamentos</h1>
 
     {% if configuracao %}
-        <div class="card mb-4">
-            <div class="card-body">
-                <h5 class="card-title">Chave PIX</h5>
-                <div class="input-group">
-                    <input type="text" class="form-control" value="{{ configuracao.chave_pix }}" readonly>
-                    <button class="btn btn-outline-secondary" type="button" onclick="copiarChavePix()">
-                        <i class="fas fa-copy"></i> Copiar
-                    </button>
-                </div>
-            </div>
+        <div class="alert alert-info">
+            <h4>Chave PIX: {{ configuracao.chave_pix }}</h4>
         </div>
     {% endif %}
 
     <div class="table-responsive">
-        <table class="table table-striped table-hover">
-            <thead class="table-dark">
+        <table class="table table-striped">
+            <thead>
                 <tr>
                     <th>Pedido</th>
                     <th>Comprador</th>
@@ -56,7 +48,7 @@
                         <td>
                             {% if pedido.comprovantes.all %}
                                 <a href="{{ pedido.comprovantes.first.arquivo.url }}" target="_blank" class="btn btn-sm btn-info">
-                                    <i class="fas fa-eye"></i> Ver
+                                    Ver Comprovante
                                 </a>
                             {% else %}
                                 <span class="badge bg-secondary">Sem comprovante</span>
@@ -72,24 +64,4 @@
         </table>
     </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-    function copiarChavePix() {
-        const chavePix = event.target.closest('.input-group').querySelector('input');
-        chavePix.select();
-        document.execCommand('copy');
-        
-        // Mostrar mensagem de sucesso
-        const botao = event.target.closest('button');
-        const textoOriginal = botao.innerHTML;
-        botao.innerHTML = '<i class="fas fa-check"></i> Copiado!';
-        
-        // Restaurar texto original após 2 segundos
-        setTimeout(() => {
-            botao.innerHTML = textoOriginal;
-        }, 2000);
-    }
-</script>
 {% endblock %} 
