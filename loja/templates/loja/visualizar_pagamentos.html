@@ -7,13 +7,8 @@
 <div class="container">
     <h1 class="text-center mb-4">Visualizar Pagamentos</h1>
 
-    {% if configuracao %}
-        <div class="alert alert-info">
-            <h4>Chave PIX: {{ configuracao.chave_pix }}</h4>
-        </div>
-    {% endif %}
-
-    <div class="table-responsive">
+    <h2 class="mb-3">Pagamentos Realizados</h2>
+    <div class="table-responsive mb-5">
         <table class="table table-striped">
             <thead>
                 <tr>
@@ -58,6 +53,36 @@
                 {% empty %}
                     <tr>
                         <td colspan="8" class="text-center">Nenhum pedido encontrado.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <h2 class="mb-3">Cotas Disponíveis</h2>
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Produto</th>
+                    <th>Cota</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for produto in produtos %}
+                    {% for cota in produto.cotas_disponiveis %}
+                        <tr>
+                            <td>{{ produto.nome }}</td>
+                            <td>{{ cota }}</td>
+                            <td>
+                                <span class="badge bg-secondary">Disponível</span>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-center">Nenhuma cota disponível.</td>
                     </tr>
                 {% endfor %}
             </tbody>
