@@ -1,13 +1,13 @@
 {% extends 'loja/base.html' %}
 {% load static %}
 
-{% block title %}Pagamento - {{ pedido.produto.nome }}{% endblock %}
+{% block title %}Pagamento - Cota {{ pedido.cota }}{% endblock %}
 
 {% block content %}
 <div class="container">
-    <h1 class="text-center mb-4">Pagamento - {{ pedido.produto.nome }}</h1>
+    <h1 class="text-center mb-4">Pagamento - Cota {{ pedido.cota }}</h1>
 
-    <div class="card">
+    <div class="card mb-4">
         <div class="card-body">
             <h5 class="card-title">Informações do Pedido</h5>
             <p><strong>Comprador:</strong> {{ pedido.nome_comprador }}</p>
@@ -16,7 +16,7 @@
         </div>
     </div>
 
-    <div class="card mt-4">
+    <div class="card mb-4">
         <div class="card-body">
             <h5 class="card-title">Pagamento via PIX</h5>
             <div class="mb-3">
@@ -28,13 +28,10 @@
                     </button>
                 </div>
             </div>
-            <div class="text-center">
-                <img src="{{ qr_code_url }}" alt="QR Code PIX" class="img-fluid">
-            </div>
         </div>
     </div>
 
-    <div class="card mt-4">
+    <div class="card">
         <div class="card-body">
             <h5 class="card-title">Enviar Comprovante</h5>
             <form method="post" enctype="multipart/form-data">
