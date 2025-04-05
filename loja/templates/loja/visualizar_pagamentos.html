@@ -1,144 +1,67 @@
+{% extends 'loja/base.html' %}
 {% load static %}
-{% load loja_tags %}
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <title>Visualizar Pagamentos</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-        }
-        h1 {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 30px;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: center;
-        }
-        th {
-            background-color: #f2f2f2;
-        }
-        tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-        tr:hover {
-            background-color: #f1f1f1;
-        }
-        .linha-pago {
-            color: #28a745;
-            font-weight: normal;
-        }
-        .linha-aguardando {
-            color: #dc3545;
-            font-weight: normal;
-        }
-        .mes-ano {
-            font-weight: bold;
-            font-size: 16px;
-            text-align: center;
-            padding: 10px;
-            background-color: #e9ecef;
-        }
-        .produto-section {
-            margin-bottom: 40px;
-            padding: 20px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-        }
-        .produto-titulo {
-            text-align: center;
-            font-size: 24px;
-            margin-bottom: 20px;
-            color: #333;
-        }
-    </style>
-</head>
-<body>
-    <h1>Visualizar Pagamentos</h1>
 
-    {% for produto in produtos %}
-        <div class="produto-section">
-            <h2 class="produto-titulo">{{ produto.nome }}</h2>
-            
-            <!-- Tabela de Pagamentos -->
-            <h3>Pagamentos Realizados</h3>
-            <table>
-                <thead>
+{% block title %}Visualizar Pagamentos{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="text-center mb-4">Visualizar Pagamentos</h1>
+
+    {% if configuracao %}
+        <div class="alert alert-info">
+            <h4>Chave PIX: {{ configuracao.chave_pix }}</h4>
+        </div>
+    {% endif %}
+
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Pedido</th>
+                    <th>Comprador</th>
+                    <th>Produto</th>
+                    <th>Cota</th>
+                    <th>Valor</th>
+                    <th>Status</th>
+                    <th>Data</th>
+                    <th>Comprovante</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pedido in pedidos %}
                     <tr>
-                        <td colspan="6" class="mes-ano">
-                            {% if produto.data_cadastro %}
-                                {{ produto.data_cadastro|date:"F Y" }}
+                        <td>{{ pedido.id }}</td>
+                        <td>{{ pedido.nome_comprador }}</td>
+                        <td>{{ pedido.produto.nome }}</td>
+                        <td>{{ pedido.cota }}</td>
+                        <td>R$ {{ pedido.valor }}</td>
+                        <td>
+                            {% if pedido.status == 'pendente' %}
+                                <span class="badge bg-warning">Pendente</span>
+                            {% elif pedido.status == 'pago' %}
+                                <span class="badge bg-success">Pago</span>
+                            {% elif pedido.status == 'cancelado' %}
+                                <span class="badge bg-danger">Cancelado</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ pedido.data|date:"d/m/Y H:i" }}</td>
+                        <td>
+                            {% if pedido.comprovantes.all %}
+                                <a href="{{ pedido.comprovantes.first.arquivo.url }}" target="_blank" class="btn btn-sm btn-info">
+                                    Ver Comprovante
+                                </a>
                             {% else %}
-                                Data não definida
+                                <span class="badge bg-secondary">Sem comprovante</span>
                             {% endif %}
                         </td>
                     </tr>
+                {% empty %}
                     <tr>
-                        <th>ID</th>
-                        <th>Comprador</th>
-                        <th>Cota</th>
-                        <th>Valor</th>
-                        <th>Status</th>
-                        <th>Data</th>
+                        <td colspan="8" class="text-center">Nenhum pedido encontrado.</td>
                     </tr>
-                </thead>
-                <tbody>
-                    {% for pedido in pedidos_por_produto %}
-                        {% if pedido.produto == produto %}
-                            <tr class="{% if pedido.status == 'PAGO' %}linha-pago{% elif pedido.status == 'AGUARDANDO_PAGAMENTO' %}linha-aguardando{% endif %}">
-                                <td>{{ pedido.id }}</td>
-                                <td>{{ pedido.nome_comprador }}</td>
-                                <td>{{ pedido.cota }}</td>
-                                <td>R$ {{ pedido.valor }}</td>
-                                <td>{{ pedido.get_status_display }}</td>
-                                <td>{{ pedido.data|date:"d/m/Y H:i" }}</td>
-                            </tr>
-                        {% endif %}
-                    {% empty %}
-                        <tr>
-                            <td colspan="6">Nenhum pagamento encontrado para este produto.</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-
-            <!-- Tabela de Cotas Não Compradas -->
-            <h2>Os que não compraram a cota</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Nome</th>
-                        <th>Email</th>
-                        <th>Data de Cadastro</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for comprador in compradores_por_produto|get_item:produto %}
-                        <tr>
-                            <td>{{ comprador.id }}</td>
-                            <td>{{ comprador.nome }}</td>
-                            <td>{{ comprador.email }}</td>
-                            <td>{{ comprador.data_cadastro|date:"d/m/Y H:i" }}</td>
-                        </tr>
-                    {% empty %}
-                        <tr>
-                            <td colspan="4">Nenhum comprador encontrado.</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    {% empty %}
-        <p>Nenhum produto cadastrado.</p>
-    {% endfor %}
-</body>
-</html> 
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %} 

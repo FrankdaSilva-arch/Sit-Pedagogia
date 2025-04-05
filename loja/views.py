@@ -89,36 +89,12 @@ def enviar_comprovante(request, pedido_id):
 
 @login_required
 def visualizar_pagamentos(request):
-    if not request.user.is_staff:
-        return redirect('home')
-
-    produtos = Produto.objects.all()
-    pedidos = Pedido.objects.all()
-
-    # Criar um dicionário para armazenar os compradores que não têm pedidos para cada produto
-    compradores_por_produto = {}
-
-    for produto in produtos:
-        # Obter todos os nomes de compradores que têm pedidos para este produto
-        compradores_com_pedido = set(
-            pedido.nome_comprador for pedido in pedidos if pedido.produto == produto)
-
-        # Obter todos os compradores cadastrados ordenados por ID
-        todos_compradores = set(Comprador.objects.all().order_by('id'))
-
-        # Os compradores que não têm pedidos são a diferença entre todos e os que têm
-        compradores_por_produto[produto] = [
-            comprador for comprador in todos_compradores
-            if comprador.nome not in compradores_com_pedido
-        ]
-
-    context = {
-        'produtos': produtos,
-        'pedidos_por_produto': pedidos,
-        'compradores_por_produto': compradores_por_produto,
-    }
-
-    return render(request, 'loja/visualizar_pagamentos.html', context)
+    pedidos = Pedido.objects.all().order_by('-data')
+    configuracao = ConfiguracaoPagamento.objects.first()
+    return render(request, 'loja/visualizar_pagamentos.html', {
+        'pedidos': pedidos,
+        'configuracao': configuracao
+    })
 
 
 @staff_member_required
@@ -536,3 +512,8 @@ def iniciar_contagem_compradores(request):
         print(f"Erro: {str(e)}")
 
     return redirect('admin:loja_comprador_changelist')
+
+
+def index(request):
+    produtos = Produto.objects.filter(ativo=True)
+    return render(request, 'loja/index.html', {'produtos': produtos})

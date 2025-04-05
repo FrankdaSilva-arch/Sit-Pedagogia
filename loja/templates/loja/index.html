@@ -1,0 +1,105 @@
+{% extends 'loja/base.html' %}
+{% load static %}
+
+{% block title %}Formandos do Curso de Pedagogia para 2027{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="text-center mb-4">Formandos do Curso de Pedagogia para 2027</h1>
+    <h2 class="text-center mb-4">Loja Virtual da Turma</h2>
+
+    <div class="row">
+        <div class="col-md-12 text-center mb-4">
+            <a href="{% url 'visualizar_pagamentos' %}" class="btn btn-primary">
+                <i class="fas fa-money-bill-wave"></i> Visualizar Pagamentos
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        {% if produtos %}
+            {% for produto in produtos %}
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        {% if produto.imagem %}
+                            <img src="{{ produto.imagem.url }}" class="card-img-top" alt="{{ produto.nome }}">
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">{{ produto.nome }}</h5>
+                            <p class="card-text">{{ produto.descricao }}</p>
+                            <p class="card-text"><strong>Preço: R$ {{ produto.preco }}</strong></p>
+                            <p class="card-text">Cotas disponíveis: {{ produto.cota_inicial }} a {{ produto.cota_final }}</p>
+                            <button class="btn btn-primary" onclick="comprarProduto({{ produto.id }})">
+                                Comprar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12 text-center">
+                <p>Nenhum produto cadastrado ainda.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal de Compra -->
+<div class="modal fade" id="modalCompra" tabindex="-1" aria-labelledby="modalCompraLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalCompraLabel">Confirmar Compra</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formCompra">
+                    <div class="mb-3">
+                        <label for="nomeComprador" class="form-label">Nome do Comprador:</label>
+                        <input type="text" class="form-control" id="nomeComprador" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="cota" class="form-label">Número da Cota:</label>
+                        <input type="number" class="form-control" id="cota" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="confirmarCompra()">Confirmar Compra</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let produtoSelecionado = null;
+
+    function comprarProduto(produtoId) {
+        produtoSelecionado = produtoId;
+        $('#modalCompra').modal('show');
+    }
+
+    function confirmarCompra() {
+        const nomeComprador = document.getElementById('nomeComprador').value;
+        const cota = document.getElementById('cota').value;
+
+        if (!nomeComprador || !cota) {
+            alert('Por favor, preencha todos os campos.');
+            return;
+        }
+
+        // Aqui você pode adicionar a lógica para enviar os dados para o servidor
+        console.log('Compra confirmada:', {
+            produtoId: produtoSelecionado,
+            nomeComprador: nomeComprador,
+            cota: cota
+        });
+
+        $('#modalCompra').modal('hide');
+    }
+</script>
+{% endblock %} 
