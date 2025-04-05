@@ -87,7 +87,6 @@ def enviar_comprovante(request, pedido_id):
     return redirect('loja:pagamento', produto_id=pedido.produto.id, pedido_id=pedido_id)
 
 
-@login_required
 def visualizar_pagamentos(request):
     pedidos = Pedido.objects.all().order_by('-data')
     configuracao = ConfiguracaoPagamento.objects.first()
