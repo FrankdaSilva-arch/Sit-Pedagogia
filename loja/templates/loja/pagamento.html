@@ -1,155 +1,73 @@
+{% extends 'loja/base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pagamento - {{ pedido.produto.nome }}</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        h1 {
-            color: #333;
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .pedido-info {
-            background-color: #f8f9fa;
-            padding: 15px;
-            border-radius: 4px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        .pedido-info p {
-            margin: 5px 0;
-            color: #555;
-        }
-        .pedido-info strong {
-            display: inline-block;
-            min-width: 100px;
-            text-align: right;
-            margin-right: 10px;
-        }
-        .qr-code-container {
-            text-align: center;
-            margin: 20px 0;
-            padding: 20px;
-            background-color: white;
-            border-radius: 4px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .qr-code {
-            max-width: 200px;
-            margin: 0 auto;
-        }
-        .copy-button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 8px 16px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-        .copy-button:hover {
-            background-color: #45a049;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            color: #555;
-        }
-        input[type="file"] {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-        button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            width: 100%;
-            font-size: 16px;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        .error-message {
-            color: #dc3545;
-            margin-top: 5px;
-        }
-        .success-message {
-            color: #28a745;
-            margin-top: 5px;
-        }
-        .instrucoes {
-            background-color: #fff3cd;
-            padding: 15px;
-            border-radius: 4px;
-            margin: 20px 0;
-            color: #856404;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Pagamento - {{ pedido.produto.nome }}</h1>
-        
-        <div class="pedido-info">
+
+{% block title %}Pagamento - {{ pedido.produto.nome }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="text-center mb-4">Pagamento - {{ pedido.produto.nome }}</h1>
+
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Informações do Pedido</h5>
             <p><strong>Comprador:</strong> {{ pedido.nome_comprador }}</p>
             <p><strong>Data:</strong> {{ pedido.data|date:"d/m/Y H:i" }}</p>
+            <p><strong>Valor:</strong> R$ {{ pedido.valor }}</p>
         </div>
-        
-        {% if configuracao %}
-            {% if configuracao.instrucoes %}
-            <div class="instrucoes">
-                {{ configuracao.instrucoes|linebreaks }}
-            </div>
-            {% endif %}
-
-            <div class="qr-code-container">
-                <img src="{{ configuracao.qr_code.url }}" alt="QR Code PIX" class="qr-code">
-                <p><strong>Chave PIX:</strong> {{ configuracao.chave_pix }}</p>
-                <p><strong>Valor:</strong> R$ {{ pedido.valor }}</p>
-            </div>
-        {% endif %}
-
-        <form method="post" enctype="multipart/form-data" action="{% url 'loja:enviar_comprovante' pedido_id=pedido.id %}">
-            {% csrf_token %}
-            <div class="form-group">
-                <label for="comprovante">Enviar Comprovante:</label>
-                <input type="file" id="comprovante" name="comprovante" accept="image/*,.pdf" required>
-            </div>
-            <button type="submit">Enviar Comprovante</button>
-        </form>
-
-        {% if messages %}
-            {% for message in messages %}
-                <div class="{% if message.tags == 'error' %}error-message{% else %}success-message{% endif %}">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        {% endif %}
     </div>
-</body>
-</html> 
+
+    <div class="card mt-4">
+        <div class="card-body">
+            <h5 class="card-title">Pagamento via PIX</h5>
+            <div class="mb-3">
+                <label class="form-label"><strong>Chave PIX:</strong></label>
+                <div class="input-group">
+                    <input type="text" class="form-control" id="chavePix" value="{{ configuracao.chave_pix }}" readonly>
+                    <button class="btn btn-outline-secondary" type="button" onclick="copiarChavePix()">
+                        <i class="fas fa-copy"></i> Copiar
+                    </button>
+                </div>
+            </div>
+            <div class="text-center">
+                <img src="{{ qr_code_url }}" alt="QR Code PIX" class="img-fluid">
+            </div>
+        </div>
+    </div>
+
+    <div class="card mt-4">
+        <div class="card-body">
+            <h5 class="card-title">Enviar Comprovante</h5>
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="comprovante" class="form-label">Selecione o comprovante:</label>
+                    <input type="file" class="form-control" id="comprovante" name="comprovante" required>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-upload"></i> Enviar Comprovante
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function copiarChavePix() {
+        const chavePix = document.getElementById('chavePix');
+        chavePix.select();
+        document.execCommand('copy');
+        
+        // Mostrar mensagem de sucesso
+        const botao = event.target.closest('button');
+        const textoOriginal = botao.innerHTML;
+        botao.innerHTML = '<i class="fas fa-check"></i> Copiado!';
+        
+        // Restaurar texto original após 2 segundos
+        setTimeout(() => {
+            botao.innerHTML = textoOriginal;
+        }, 2000);
+    }
+</script>
+{% endblock %} 
