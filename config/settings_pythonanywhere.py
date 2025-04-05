@@ -14,9 +14,9 @@ ALLOWED_HOSTS = ['*']
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'FRANKPED2025$default',
+        'NAME': 'FRANKPED2025$padrão',
         'USER': 'FRANKPED2025',
-        'PASSWORD': os.environ.get('DB_PASSWORD', 'sua_senha'),
+        'PASSWORD': 'KSbtwafsak10',
         'HOST': 'FRANKPED2025.mysql.pythonanywhere-services.com',
         'PORT': '3306',
         'OPTIONS': {
