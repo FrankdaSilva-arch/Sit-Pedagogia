@@ -126,6 +126,18 @@ class ConfiguracaoPagamentoAdmin(admin.ModelAdmin):
         # Impedir exclusão da configuração
         return False
 
+    def has_module_permission(self, request):
+        # Restringir acesso apenas para superusuários
+        return request.user.is_superuser
+
+    def has_view_permission(self, request, obj=None):
+        # Restringir visualização apenas para superusuários
+        return request.user.is_superuser
+
+    def has_change_permission(self, request, obj=None):
+        # Restringir edição apenas para superusuários
+        return request.user.is_superuser
+
 
 @admin.register(Comprador)
 class CompradorAdmin(admin.ModelAdmin):
