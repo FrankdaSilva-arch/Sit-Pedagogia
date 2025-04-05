@@ -14,11 +14,11 @@ LOGGING = {}
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.environ.get('DB_NAME', 'seu_usuario$loja'),
-        'USER': os.environ.get('DB_USER', 'seu_usuario'),
+        'NAME': 'FRANKPED2025$default',  # Nome do banco de dados existente
+        'USER': 'FRANKPED2025',
         'PASSWORD': os.environ.get('DB_PASSWORD', 'sua_senha'),
-        'HOST': os.environ.get('DB_HOST', 'seu_usuario.mysql.pythonanywhere-services.com'),
-        'PORT': os.environ.get('DB_PORT', '3306'),
+        'HOST': 'FRANKPED2025.mysql.pythonanywhere-services.com',
+        'PORT': '3306',
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
             'charset': 'utf8mb4',
