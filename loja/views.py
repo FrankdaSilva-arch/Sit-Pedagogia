@@ -424,9 +424,27 @@ def pagamento(request, produto_id, pedido_id):
     pedido = get_object_or_404(Pedido, pk=pedido_id, produto_id=produto_id)
     configuracao = ConfiguracaoPagamento.objects.first()
 
+    # Gerar QR Code
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(configuracao.chave_pix)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+
+    # Converter imagem para base64
+    buffered = BytesIO()
+    img.save(buffered, format="PNG")
+    img_str = base64.b64encode(buffered.getvalue()).decode()
+    qr_code_url = f"data:image/png;base64,{img_str}"
+
     context = {
         'pedido': pedido,
         'configuracao': configuracao,
+        'qr_code_url': qr_code_url,
     }
 
     return render(request, 'loja/pagamento.html', context)
