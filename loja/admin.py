@@ -2,9 +2,11 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.urls import reverse, path
 from django.shortcuts import render, redirect
-from .models import Produto, Pedido, ConfiguracaoPagamento, Comprador, Comprovante
+from .models import Produto, Pedido, ConfiguracaoPagamento, Comprador, Comprovante, Moeda, LogAcesso
 import logging
 from django.contrib import messages
+from django.utils import timezone
+from django.db import transaction
 
 # Configuração básica de logging
 logging.basicConfig(level=logging.DEBUG)
@@ -18,6 +20,11 @@ except admin.sites.NotRegistered:
 
 try:
     admin.site.unregister(Pedido)
+except admin.sites.NotRegistered:
+    pass
+
+try:
+    admin.site.unregister(Comprovante)
 except admin.sites.NotRegistered:
     pass
 
@@ -150,10 +157,14 @@ class CompradorAdmin(admin.ModelAdmin):
 
 @admin.register(Comprovante)
 class ComprovanteAdmin(admin.ModelAdmin):
-    list_display = ('pedido_link', 'data_envio', 'visualizar_arquivo')
-    list_filter = ('data_envio',)
-    search_fields = ('pedido__nome_comprador', 'pedido__produto__nome')
+    list_display = ('pedido_link', 'nome_comprador', 'produto',
+                    'cota', 'valor', 'status', 'data_envio', 'visualizar_arquivo')
+    list_filter = ('data_envio', 'pedido__produto', 'pedido__status')
+    search_fields = ('pedido__nome_comprador',
+                     'pedido__produto__nome', 'pedido__cota')
     date_hierarchy = 'data_envio'
+    readonly_fields = ('pedido', 'data_envio', 'visualizar_arquivo')
+    ordering = ('-data_envio',)
 
     class Media:
         css = {
@@ -162,41 +173,97 @@ class ComprovanteAdmin(admin.ModelAdmin):
 
     def pedido_link(self, obj):
         url = reverse('admin:loja_pedido_change', args=[obj.pedido.id])
-        return format_html(
-            '<a href="{}">{} - {}</a>',
-            url,
-            obj.pedido.nome_comprador,
-            obj.pedido.cota
-        )
-    pedido_link.short_description = 'Pedido (Comprador - Cota)'
+        return format_html('<a href="{}">{}</a>', url, obj.pedido)
+    pedido_link.short_description = 'Pedido'
+
+    def nome_comprador(self, obj):
+        return obj.pedido.nome_comprador
+    nome_comprador.short_description = 'Comprador'
+
+    def produto(self, obj):
+        return obj.pedido.produto
+    produto.short_description = 'Produto'
+
+    def cota(self, obj):
+        return obj.pedido.cota
+    cota.short_description = 'Cota'
+
+    def valor(self, obj):
+        return f'R$ {obj.pedido.valor}'
+    valor.short_description = 'Valor'
+
+    def status(self, obj):
+        return obj.pedido.get_status_display()
+    status.short_description = 'Status'
 
     def visualizar_arquivo(self, obj):
-        if not obj.arquivo:
-            return "Sem arquivo"
+        if obj.arquivo:
+            return obj.get_icon_html()
+        return "Sem arquivo"
+    visualizar_arquivo.short_description = "Visualizar"
 
-        # Verifica se é PDF
-        ext = obj.arquivo.name.split('.')[-1].lower()
-        if ext == 'pdf':
-            return format_html(
-                '<a href="{}" target="_blank" class="comprovante-link">'
-                '<div class="pdf-icon">'
-                '<div class="pdf-icon-corner"></div>'
-                '<div class="pdf-icon-text">PDF</div>'
-                '</div>'
-                '<span class="pdf-label">Visualizar PDF</span></a>',
-                obj.arquivo.url
-            )
-        # Se for imagem
-        elif ext in ['jpg', 'jpeg', 'png', 'gif']:
-            return format_html(
-                '<a href="{}" target="_blank" class="comprovante-link">'
-                '<img src="{}" class="comprovante-imagem"/></a>',
-                obj.arquivo.url,
-                obj.arquivo.url
-            )
-        # Para outros tipos de arquivo
-        return format_html(
-            '<a href="{}" target="_blank">Visualizar arquivo</a>',
-            obj.arquivo.url
-        )
-    visualizar_arquivo.short_description = "Comprovante"
+
+@admin.register(LogAcesso)
+class LogAcessoAdmin(admin.ModelAdmin):
+    list_display = ('usuario', 'get_data_acesso_ajustada',
+                    'moedas_disponiveis', 'moedas_usadas')
+    list_filter = ('data_acesso', 'usuario')
+    search_fields = ('usuario',)
+    ordering = ('-data_acesso',)
+    readonly_fields = ('usuario', 'data_acesso',
+                       'moedas_disponiveis', 'moedas_usadas')
+    change_list_template = 'admin/loja/logacesso/change_list.html'
+
+    def get_data_acesso_ajustada(self, obj):
+        return obj.get_data_acesso_ajustada().strftime('%d/%m/%Y %H:%M:%S')
+    get_data_acesso_ajustada.short_description = 'Data de Acesso (GMT-4)'
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path('limpar/', self.admin_site.admin_view(self.limpar_logs),
+                 name='limpar_logs'),
+        ]
+        return custom_urls + urls
+
+    def limpar_logs(self, request):
+        if request.method == 'POST':
+            try:
+                with transaction.atomic():
+                    LogAcesso.objects.all().delete()
+                    messages.success(
+                        request, 'Todos os logs de acesso foram removidos com sucesso!')
+            except Exception as e:
+                messages.error(request, f'Erro ao remover logs: {str(e)}')
+        return redirect('admin:loja_logacesso_changelist')
+
+    def changelist_view(self, request, extra_context=None):
+        extra_context = extra_context or {}
+        extra_context['show_clear_button'] = True
+        return super().changelist_view(request, extra_context=extra_context)
+
+
+@admin.register(Moeda)
+class MoedaAdmin(admin.ModelAdmin):
+    list_display = ('usuario', 'senha', 'moedas_disponiveis',
+                    'moedas_usadas', 'data_uso', 'data_criacao')
+    search_fields = ('usuario', 'senha')
+    list_filter = ('data_criacao', 'data_uso')
+    readonly_fields = ('data_criacao', 'data_uso')
+    change_list_template = 'admin/loja/moeda/change_list.html'
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path('logs/', self.admin_site.admin_view(self.logs_view),
+                 name='moeda-logs'),
+        ]
+        return custom_urls + urls
+
+    def logs_view(self, request):
+        logs = LogAcesso.objects.all()[:50]  # Limita a 50 logs mais recentes
+        context = {
+            'logs': logs,
+            'title': 'Logs de Acesso',
+        }
+        return render(request, 'admin/loja/moeda/logs.html', context)

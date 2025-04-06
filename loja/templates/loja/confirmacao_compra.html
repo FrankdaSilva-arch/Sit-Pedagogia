@@ -1,83 +1,38 @@
+{% extends 'loja/base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Confirmação de Compra</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            background-color: white;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            text-align: center;
-        }
-        h1 {
-            color: #28a745;
-            margin-bottom: 20px;
-        }
-        .status-box {
-            background-color: #d4edda;
-            color: #155724;
-            padding: 20px;
-            border-radius: 4px;
-            margin: 20px 0;
-        }
-        .pedido-info {
-            background-color: #f8f9fa;
-            padding: 20px;
-            border-radius: 4px;
-            margin: 20px 0;
-            text-align: left;
-        }
-        .pedido-info p {
-            margin: 10px 0;
-        }
-        .btn-voltar {
-            display: inline-block;
-            background-color: #4CAF50;
-            color: white;
-            padding: 12px 24px;
-            text-decoration: none;
-            border-radius: 4px;
-            margin-top: 20px;
-            transition: background-color 0.3s;
-        }
-        .btn-voltar:hover {
-            background-color: #45a049;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Compra Confirmada!</h1>
-        
-        <div class="status-box">
-            <h2>Status do Pedido: {{ pedido.get_status_display }}</h2>
-        </div>
-        
-        <div class="pedido-info">
-            <h3>Detalhes do Pedido</h3>
-            <p><strong>Produto:</strong> {{ pedido.produto.nome }}</p>
-            <p><strong>Comprador:</strong> {{ pedido.nome_comprador }}</p>
-            <p><strong>Cota:</strong> {{ pedido.cota }}</p>
-            <p><strong>Valor:</strong> R$ {{ pedido.valor }}</p>
-            <p><strong>Data:</strong> {{ pedido.data|date:"d/m/Y H:i" }}</p>
-        </div>
 
-        <p>Seu comprovante foi recebido e está aguardando confirmação.</p>
-        <p>Você receberá uma notificação quando o pagamento for confirmado.</p>
-        
-        <a href="{% url 'loja:lista_produtos' %}" class="btn-voltar">Voltar à Loja</a>
+{% block title %}Confirmação de Compra{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="card">
+        <div class="card-body text-center">
+            <h1 class="card-title text-success">Compra Confirmada!</h1>
+            
+            <div class="alert alert-success mt-3">
+                <h2>Status do Pedido: {{ pedido.get_status_display }}</h2>
+            </div>
+            
+            <div class="card mt-3">
+                <div class="card-body text-start">
+                    <h3>Detalhes do Pedido</h3>
+                    <p><strong>Produto:</strong> {{ pedido.produto.nome }}</p>
+                    <p><strong>Comprador:</strong> {{ pedido.nome_comprador }}</p>
+                    <p><strong>Cota:</strong> {{ pedido.cota }}</p>
+                    <p><strong>Valor:</strong> R$ {{ pedido.valor }}</p>
+                    <p><strong>Data:</strong> {{ pedido.data|date:"d/m/Y H:i" }}</p>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <p>Seu comprovante foi recebido e está aguardando confirmação.</p>
+                <p>Você receberá uma notificação quando o pagamento for confirmado.</p>
+            </div>
+            
+            <a href="{% url 'loja:lista_produtos' %}" class="btn btn-success mt-3">
+                <i class="fas fa-arrow-left"></i> Voltar à Loja
+            </a>
+        </div>
     </div>
-</body>
-</html> 
+</div>
+{% endblock %} 

@@ -37,7 +37,7 @@
     <div class="card">
         <div class="card-body">
             <h5 class="card-title">Enviar Comprovante</h5>
-            <form method="post" enctype="multipart/form-data">
+            <form method="post" enctype="multipart/form-data" action="{% url 'loja:enviar_comprovante' pedido.id %}">
                 {% csrf_token %}
                 <div class="mb-3">
                     <label for="comprovante" class="form-label">Selecione o comprovante:</label>

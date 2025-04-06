@@ -196,16 +196,12 @@
 <body>
     <div class="container">
         <header>
-            <h1>Formandos do Curso de Pedagogia para 2027</h1>
-            <p>Loja Virtual da Turma</p>
+            <h1>Formandos Pedagogia 2027</h1>
+            <p>Bem-vindo à nossa loja de cotas!</p>
+            <div class="header-buttons">
+                <a href="{% url 'loja:verificar_senha' %}" class="btn btn-primary">Visualizar Pagamentos</a>
+            </div>
         </header>
-
-        {% if user.is_staff %}
-        <div class="header-buttons">
-            <a href="{% url 'admin:index' %}" class="btn-visualizar">Administrador</a>
-            <a href="{% url 'loja:visualizar_pagamentos' %}" class="btn-visualizar">Visualizar Pagamentos</a>
-        </div>
-        {% endif %}
 
         <div class="produtos">
             {% if produtos %}

@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.contrib import messages
-from .models import Produto, Pedido, Comprovante, ConfiguracaoPagamento, Comprador
+from .models import Produto, Pedido, Comprovante, ConfiguracaoPagamento, Comprador, Moeda, LogAcesso
 from .forms import ComprovanteForm
 from django.core.files.storage import FileSystemStorage
 import logging
@@ -17,6 +17,18 @@ from django.contrib.admin.views.decorators import staff_member_required
 import qrcode
 import base64
 from io import BytesIO
+from django.utils import timezone
+from django.core import serializers
+import json
+from django.db.models import Sum
+from django.db import transaction
+from django.contrib.auth.models import User
+from django.contrib.auth import authenticate, login
+from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth import logout
+from django.contrib.auth.decorators import user_passes_test
+from django.core.exceptions import PermissionDenied
+import pytz
 
 # Configurar logging
 logger = logging.getLogger(__name__)
@@ -73,27 +85,128 @@ def meus_pedidos(request):
 
 
 def enviar_comprovante(request, pedido_id):
+    print(f"\n{Colors.CYAN}=== Iniciando envio de comprovante ==={Colors.END}")
+    print(f"{Colors.BLUE}Pedido ID: {pedido_id}{Colors.END}")
+
     pedido = get_object_or_404(Pedido, pk=pedido_id)
-    if request.method == 'POST' and request.FILES.get('comprovante'):
-        Comprovante.objects.create(
-            pedido=pedido,
-            arquivo=request.FILES['comprovante']
-        )
-        # Atualiza o status do pedido para Confirmação de Pagamento
-        pedido.status = 'AGUARDANDO_CONFIRMACAO'
-        pedido.save()
-        messages.success(request, 'Comprovante enviado com sucesso!')
-        return render(request, 'loja/confirmacao_compra.html', {'pedido': pedido})
+    print(f"{Colors.GREEN}Pedido encontrado: {pedido}{Colors.END}")
+
+    if request.method == 'POST':
+        print(f"{Colors.YELLOW}Método POST recebido{Colors.END}")
+        if request.FILES.get('comprovante'):
+            print(
+                f"{Colors.GREEN}Arquivo recebido: {request.FILES['comprovante'].name}{Colors.END}")
+            Comprovante.objects.create(
+                pedido=pedido,
+                arquivo=request.FILES['comprovante']
+            )
+            print(f"{Colors.GREEN}Comprovante criado com sucesso{Colors.END}")
+
+            # Atualiza o status do pedido para Confirmação de Pagamento
+            pedido.status = 'AGUARDANDO_CONFIRMACAO'
+            pedido.save()
+            print(
+                f"{Colors.GREEN}Status do pedido atualizado para AGUARDANDO_CONFIRMACAO{Colors.END}")
+
+            messages.success(request, 'Comprovante enviado com sucesso!')
+            print(
+                f"{Colors.GREEN}Redirecionando para página de confirmação{Colors.END}")
+            return redirect('loja:confirmacao_compra', pedido_id=pedido_id)
+        else:
+            print(f"{Colors.RED}Nenhum arquivo foi enviado{Colors.END}")
+            messages.error(
+                request, 'Por favor, selecione um arquivo para enviar.')
+            return redirect('loja:pagamento', produto_id=pedido.produto.id, pedido_id=pedido_id)
+
+    print(f"{Colors.YELLOW}Método não é POST, redirecionando para página de pagamento{Colors.END}")
     return redirect('loja:pagamento', produto_id=pedido.produto.id, pedido_id=pedido_id)
 
 
 def visualizar_pagamentos(request):
-    pedidos = Pedido.objects.all().order_by('-data')
-    configuracao = ConfiguracaoPagamento.objects.first()
-    return render(request, 'loja/visualizar_pagamentos.html', {
-        'pedidos': pedidos,
-        'configuracao': configuracao
-    })
+    print("\n=== DEBUG: Iniciando visualizar_pagamentos ===")
+    print(f"Sessão atual: {request.session.items()}")
+
+    # Verifica se o usuário tem permissão de acesso
+    if not request.session.get('tem_acesso'):
+        print("=== DEBUG: Sem acesso, redirecionando para verificar_senha ===")
+        return redirect('loja:verificar_senha')
+
+    # Não limpa a permissão de acesso para manter a sessão
+    print(
+        f"\n=== DEBUG: Nome do usuário na sessão: {request.session.get('nome_usuario')}")
+    print(
+        f"=== DEBUG: Tem acesso na sessão: {request.session.get('tem_acesso')}")
+
+    # Busca todos os produtos
+    produtos = Produto.objects.all()
+
+    # Para cada produto, busca seus pedidos e compradores sem cotas
+    dados_produtos = []
+    for produto in produtos:
+        print(f"\nProcessando produto: {produto.nome}")
+
+        # Busca os pedidos deste produto
+        pedidos = Pedido.objects.filter(produto=produto).order_by('-data')
+
+        # Ajusta o horário para GMT-4 em todos os pedidos
+        for pedido in pedidos:
+            pedido.data = pedido.data - timezone.timedelta(hours=4)
+            print(f"=== DEBUG: Data do pedido ajustada: {pedido.data}")
+
+        # Busca compradores que não compraram cotas deste produto
+        compradores_sem_cotas = []
+        compradores_com_cotas = set(
+            pedido.nome_comprador for pedido in pedidos if pedido.nome_comprador)
+        for comprador in Comprador.objects.all():
+            if comprador.nome not in compradores_com_cotas:
+                compradores_sem_cotas.append(comprador)
+
+        # Formata o mês/ano em português
+        if produto.data_cadastro:
+            meses = {
+                1: 'Janeiro', 2: 'Fevereiro', 3: 'Março', 4: 'Abril',
+                5: 'Maio', 6: 'Junho', 7: 'Julho', 8: 'Agosto',
+                9: 'Setembro', 10: 'Outubro', 11: 'Novembro', 12: 'Dezembro'
+            }
+            mes_ano = f"{meses[produto.data_cadastro.month]}/{produto.data_cadastro.year}"
+        else:
+            mes_ano = None
+
+        # Adiciona os dados do produto à lista
+        dados_produtos.append({
+            'produto': produto,
+            'pedidos': pedidos,
+            'compradores_sem_cotas': compradores_sem_cotas,
+            'mes_ano': mes_ano
+        })
+
+    # Busca ou cria a configuração de pagamento
+    configuracao, created = ConfiguracaoPagamento.objects.get_or_create(
+        id=1,
+        defaults={
+            'valor_quota': 10.00,
+            'data_vencimento': timezone.now().date()
+        }
+    )
+
+    # Obtém o nome do usuário da sessão
+    nome_usuario = request.session.get('nome_usuario', 'Usuário')
+    print(
+        f"\n=== DEBUG: Nome do usuário passado para o template: {nome_usuario}")
+    print(f"=== DEBUG: Sessão completa: {request.session.items()}")
+
+    # Cria o contexto com todas as variáveis necessárias
+    context = {
+        'dados_produtos': dados_produtos,
+        'configuracao': configuracao,
+        'nome_usuario': nome_usuario,
+        'tem_acesso': request.session.get('tem_acesso', False),
+        'request': request
+    }
+
+    print(f"=== DEBUG: Contexto enviado para o template: {context}")
+
+    return render(request, 'loja/visualizar_pagamentos.html', context)
 
 
 @staff_member_required
@@ -534,3 +647,200 @@ def iniciar_contagem_compradores(request):
 def index(request):
     produtos = Produto.objects.filter(ativo=True)
     return render(request, 'loja/index.html', {'produtos': produtos})
+
+
+def confirmacao_compra(request, pedido_id):
+    print(f"\n{Colors.CYAN}=== Iniciando confirmação de compra ==={Colors.END}")
+    print(f"{Colors.BLUE}Pedido ID: {pedido_id}{Colors.END}")
+
+    pedido = get_object_or_404(Pedido, pk=pedido_id)
+    print(f"{Colors.GREEN}Pedido encontrado: {pedido}{Colors.END}")
+
+    return render(request, 'loja/confirmacao_compra.html', {'pedido': pedido})
+
+
+def verificar_senha(request):
+    print("\n=== DEBUG: Iniciando verificar_senha ===")
+
+    # Limpar a sessão ao acessar a página de verificação de senha
+    if 'tem_acesso' in request.session:
+        del request.session['tem_acesso']
+    if 'nome_usuario' in request.session:
+        del request.session['nome_usuario']
+    if 'moedas_disponiveis' in request.session:
+        del request.session['moedas_disponiveis']
+
+    print("Sessão limpa")
+    print("Sessão atual:", request.session.items())
+
+    if request.method == 'POST':
+        senha = request.POST.get('senha')
+        print("Senha recebida:", senha)
+
+        try:
+            # Busca a moeda com a senha fornecida
+            moeda = Moeda.objects.get(senha=senha)
+            print("Moeda encontrada:", moeda)
+
+            # Verifica se a moeda tem saldo disponível
+            if moeda.moedas_disponiveis > 0:
+                print("Saldo disponível:", moeda.moedas_disponiveis)
+
+                # Atualiza as moedas disponíveis e usadas
+                moeda.moedas_disponiveis -= 1
+                moeda.moedas_usadas += 1
+                moeda.save()
+                print("Moedas atualizadas - Disponíveis:",
+                      moeda.moedas_disponiveis, "Usadas:", moeda.moedas_usadas)
+
+                # Registra o acesso no log
+                LogAcesso.objects.create(
+                    usuario=moeda.usuario,
+                    data_acesso=timezone.now() - timezone.timedelta(hours=4),  # Ajusta para UTC-4
+                    moedas_disponiveis=moeda.moedas_disponiveis,
+                    moedas_usadas=moeda.moedas_usadas
+                )
+                print("Log de acesso criado para:", moeda.usuario)
+
+                # Armazena o nome do usuário e moedas disponíveis na sessão
+                request.session['nome_usuario'] = moeda.usuario
+                request.session['moedas_disponiveis'] = moeda.moedas_disponiveis
+                print("Nome do usuário armazenado na sessão:", moeda.usuario)
+                print("Moedas disponíveis armazenadas na sessão:",
+                      moeda.moedas_disponiveis)
+
+                # Define a permissão de acesso
+                request.session['tem_acesso'] = True
+                print("Permissão de acesso definida:",
+                      request.session['tem_acesso'])
+
+                # Redireciona para a página de visualização de pagamentos
+                print("Redirecionando para visualizar_pagamentos")
+                return redirect('loja:visualizar_pagamentos')
+            else:
+                print("Sem saldo disponível:", moeda.moedas_disponiveis)
+                messages.error(request, 'Você não tem moedas disponíveis.')
+        except Moeda.DoesNotExist:
+            print("Moeda não encontrada")
+            messages.error(request, 'Senha incorreta.')
+
+    print("=== DEBUG: Renderizando template verificar_senha.html")
+    return render(request, 'loja/verificar_senha.html')
+
+
+@login_required
+def logs_acesso_json(request):
+    print("\n=== Iniciando logs_acesso_json ===")
+    print(f"Usuário autenticado: {request.user.username}")
+
+    try:
+        # Busca todos os logs
+        logs = LogAcesso.objects.all().order_by('data_acesso')
+        print(f"Total de logs encontrados: {logs.count()}")
+
+        # Prepara os dados para o JSON
+        data = []
+        for log in logs:
+            # Ajusta o horário para GMT-4
+            hora_correta = log.data_acesso - timezone.timedelta(hours=4)
+            data_formatada = hora_correta.strftime('%d/%m/%Y %H:%M:%S')
+
+            print(f"\nLog encontrado:")
+            print(f"Usuário: {log.usuario}")
+            print(f"Data original: {log.data_acesso}")
+            print(f"Data ajustada: {data_formatada}")
+            print(f"Moedas disponíveis: {log.moedas_disponiveis}")
+            print(f"Moedas usadas: {log.moedas_usadas}")
+
+            data.append({
+                'usuario': log.usuario,
+                'data_acesso': data_formatada,
+                'moedas_disponiveis': log.moedas_disponiveis,
+                'moedas_usadas': log.moedas_usadas
+            })
+
+        print("\n=== Dados enviados para o gráfico ===")
+        print(f"Total de registros enviados: {len(data)}")
+        print("=== Fim dos logs ===\n")
+
+        return JsonResponse(data, safe=False)
+    except Exception as e:
+        print(f"\n=== ERRO em logs_acesso_json ===")
+        print(f"Tipo do erro: {type(e).__name__}")
+        print(f"Mensagem de erro: {str(e)}")
+        print("=== Fim dos logs de erro ===\n")
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+def grafico_logs(request):
+    return render(request, 'loja/grafico_logs.html')
+
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def limpar_logs(request):
+    if request.method == 'POST':
+        try:
+            with transaction.atomic():
+                LogAcesso.objects.all().delete()
+                messages.success(
+                    request, 'Todos os logs de acesso foram removidos com sucesso!')
+        except Exception as e:
+            messages.error(request, f'Erro ao remover logs: {str(e)}')
+    return redirect('admin:loja_logacesso_changelist')
+
+
+def processar_pagamento(request):
+    print("\n=== DEBUG: Iniciando processar_pagamento ===")
+    print(f"Sessão atual: {request.session.items()}")
+
+    if request.method == 'POST':
+        print("=== DEBUG: Método POST recebido")
+
+        # Obtém os dados do formulário
+        nome_comprador = request.POST.get('nome_comprador')
+        cota = request.POST.get('cota')
+        produto_id = request.POST.get('produto')
+
+        print(
+            f"=== DEBUG: Dados recebidos - Nome: {nome_comprador}, Cota: {cota}, Produto ID: {produto_id}")
+
+        try:
+            # Busca o produto
+            produto = Produto.objects.get(id=produto_id)
+            print(f"=== DEBUG: Produto encontrado: {produto.nome}")
+
+            # Verifica se a cota está disponível
+            if int(cota) < produto.cota_inicial or int(cota) > produto.cota_final:
+                print(
+                    f"=== DEBUG: Cota {cota} fora do intervalo válido ({produto.cota_inicial} - {produto.cota_final})")
+                messages.error(request, 'Cota inválida para este produto.')
+                return redirect('loja:lista_produtos')
+
+            # Verifica se a cota já foi vendida
+            if Pedido.objects.filter(produto=produto, cota=cota).exists():
+                print(f"=== DEBUG: Cota {cota} já vendida")
+                messages.error(request, 'Esta cota já foi vendida.')
+                return redirect('loja:lista_produtos')
+
+            # Cria o pedido
+            pedido = Pedido.objects.create(
+                nome_comprador=nome_comprador,
+                produto=produto,
+                cota=cota,
+                data=timezone.now() - timezone.timedelta(hours=4)  # Ajusta para UTC-4
+            )
+            print(f"=== DEBUG: Pedido criado: {pedido}")
+
+            messages.success(request, 'Pagamento processado com sucesso!')
+            print("=== DEBUG: Mensagem de sucesso adicionada")
+
+        except Produto.DoesNotExist:
+            print("=== DEBUG: Produto não encontrado")
+            messages.error(request, 'Produto não encontrado.')
+        except Exception as e:
+            print(f"=== DEBUG: Erro ao processar pagamento: {str(e)}")
+            messages.error(request, 'Erro ao processar o pagamento.')
+
+    print("=== DEBUG: Redirecionando para lista_produtos")
+    return redirect('loja:lista_produtos')

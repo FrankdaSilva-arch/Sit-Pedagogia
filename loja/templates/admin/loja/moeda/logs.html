@@ -1,0 +1,53 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    .logs-container {
+        max-height: 500px;
+        overflow-y: auto;
+        border: 1px solid #ddd;
+        padding: 10px;
+        margin-top: 20px;
+    }
+    .log-item {
+        padding: 10px;
+        border-bottom: 1px solid #eee;
+    }
+    .log-item:last-child {
+        border-bottom: none;
+    }
+    .log-time {
+        color: #666;
+        font-size: 0.9em;
+    }
+    .log-user {
+        font-weight: bold;
+    }
+    .log-moedas {
+        color: #28a745;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="module">
+    <h2>Logs de Acesso Recentes</h2>
+    <div class="logs-container">
+        {% for log in logs %}
+        <div class="log-item">
+            <span class="log-time">{{ log.get_data_acesso_ajustada|date:"d/m/Y H:i:s" }} (GMT-4)</span>
+            <span class="log-user">{{ log.usuario }}</span>
+            <span class="log-moedas">
+                (Moedas: {{ log.moedas_disponiveis }} disponíveis, {{ log.moedas_usadas }} usadas)
+            </span>
+        </div>
+        {% empty %}
+        <div class="log-item">
+            Nenhum log de acesso encontrado.
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %} 

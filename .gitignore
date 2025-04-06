@@ -1,10 +1,4 @@
-# Arquivos de ambiente
-.env
-.venv/
-venv/
-ENV/
-
-# Arquivos do Python
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
@@ -26,16 +20,26 @@ wheels/
 .installed.cfg
 *.egg
 
-# Arquivos do Django
+# Django
 *.log
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
-media/
 mediafiles/
 staticfiles/
 
-# Arquivos do sistema
+# Ambiente virtual
+venv/
+ENV/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Sistema operacional
 .DS_Store
 Thumbs.db
 

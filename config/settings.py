@@ -44,50 +44,20 @@ INSTALLED_APPS = [
 ]
 
 # Adicione/atualize estas configurações
-DEBUG = False  # Desativar modo debug em produção
+DEBUG = True  # Ativar modo debug em desenvolvimento
 
-ALLOWED_HOSTS = ['*']  # Substitua pelo seu domínio real em produção
+ALLOWED_HOSTS = ['*']  # Permitir todos os hosts em desenvolvimento
 
-# Mantenha apenas estas configurações para arquivos estáticos
+# Configurações de arquivos estáticos
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
 ]
 
 # Configurações de mídia
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'mediafiles')
-
-# Configuração de logging mais detalhada
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-            'level': 'DEBUG',
-        },
-        'file': {
-            'class': 'logging.FileHandler',
-            'filename': 'debug.log',
-            'level': 'DEBUG',
-        },
-    },
-    'loggers': {
-        'django': {
-            'handlers': ['console', 'file'],
-            'level': 'DEBUG',
-            'propagate': True,
-        },
-        'config': {
-            'handlers': ['console', 'file'],
-            'level': 'DEBUG',
-            'propagate': True,
-        },
-    },
-}
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Adicione uma SECRET_KEY (não use esta em produção)
 SECRET_KEY = os.environ.get(
@@ -96,11 +66,14 @@ SECRET_KEY = os.environ.get(
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DB_NAME', 'loja_db'),
-        'USER': os.environ.get('DB_USER', 'postgres'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', ''),
-        'HOST': os.environ.get('DB_HOST', 'localhost'),
-        'PORT': os.environ.get('DB_PORT', '5432'),
+        'NAME': 'loja',
+        'USER': 'postgres',
+        'PASSWORD': 'FSA171612',
+        'HOST': 'localhost',
+        'PORT': '5432',
+        'OPTIONS': {
+            'client_encoding': 'UTF8',
+        },
     }
 }
 
@@ -124,11 +97,6 @@ SESSION_SAVE_EVERY_REQUEST = True
 ADMIN_SITE_HEADER = "Administração do Sistema"
 ADMIN_SITE_TITLE = "Portal de Administração"
 ADMIN_INDEX_TITLE = "Bem-vindo ao Portal de Administração"
-
-# Configurações de arquivos estáticos
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),
-]
 
 # Configurações do Admin
 ADMIN_SITE_CSS = {

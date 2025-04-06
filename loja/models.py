@@ -3,6 +3,7 @@ from .validators import validar_cpf, validar_telefone
 from django.db import models
 from django.utils.html import format_html
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 
 class Produto(models.Model):
@@ -148,3 +149,44 @@ class Comprador(models.Model):
 
     def __str__(self):
         return self.nome
+
+
+class Moeda(models.Model):
+    senha = models.CharField(max_length=50, unique=True, verbose_name="Senha")
+    usuario = models.CharField(max_length=100, verbose_name="Usuário")
+    moedas_disponiveis = models.IntegerField(
+        default=0, verbose_name="Moedas Disponíveis")
+    moedas_usadas = models.IntegerField(
+        default=0, verbose_name="Moedas Usadas")
+    data_uso = models.DateTimeField(
+        null=True, blank=True, verbose_name="Data de Uso")
+    data_criacao = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.usuario} - {self.senha}"
+
+    class Meta:
+        verbose_name = "Moeda"
+        verbose_name_plural = "Moedas"
+        ordering = ['-data_criacao']
+
+
+class LogAcesso(models.Model):
+    usuario = models.CharField(max_length=100)
+    moedas_disponiveis = models.IntegerField()
+    moedas_usadas = models.IntegerField()
+    data_acesso = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        # Ajusta o horário para GMT-4
+        hora_correta = self.data_acesso - timezone.timedelta(hours=4)
+        return f"{self.usuario} - {hora_correta.strftime('%d/%m/%Y %H:%M:%S')} (GMT-4)"
+
+    def get_data_acesso_ajustada(self):
+        # Ajusta o horário para GMT-4
+        return self.data_acesso - timezone.timedelta(hours=4)
+
+    class Meta:
+        verbose_name = "Log de Acesso"
+        verbose_name_plural = "Logs de Acesso"
+        ordering = ['-data_acesso']
