@@ -3,11 +3,6 @@
 
 {% block object-tools-items %}
     <li>
-        <a href="{% url 'loja:grafico_logs' %}" class="button" target="_blank" style="background-color: #417690; color: white; padding: 8px 12px; border-radius: 4px; text-decoration: none;">
-            Ver Gráfico
-        </a>
-    </li>
-    <li>
         <form method="post" action="{% url 'admin:limpar_logs' %}" style="display: inline;">
             {% csrf_token %}
             <button type="submit" class="button" style="background-color: #ba2121; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">
