@@ -123,11 +123,17 @@ def enviar_comprovante(request, pedido_id):
 
 
 def visualizar_pagamentos(request):
-    print("\n=== DEBUG: Iniciando visualizar_pagamentos ===")
+    # Log com data e hora
+    logger.info(
+        f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] Iniciando visualizar_pagamentos")
+    print(
+        f"\n=== DEBUG: [{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] Iniciando visualizar_pagamentos ===")
     print(f"Sessão atual: {request.session.items()}")
 
     # Verifica se o usuário tem permissão de acesso
     if not request.session.get('tem_acesso'):
+        logger.warning(
+            f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] Acesso negado em visualizar_pagamentos")
         print("=== DEBUG: Sem acesso, redirecionando para verificar_senha ===")
         return redirect('loja:verificar_senha')
 
@@ -143,6 +149,8 @@ def visualizar_pagamentos(request):
     # Para cada produto, busca seus pedidos e compradores sem cotas
     dados_produtos = []
     for produto in produtos:
+        logger.info(
+            f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] Processando produto: {produto.nome}")
         print(f"\nProcessando produto: {produto.nome}")
 
         # Busca os pedidos deste produto
@@ -191,6 +199,8 @@ def visualizar_pagamentos(request):
 
     # Obtém o nome do usuário da sessão
     nome_usuario = request.session.get('nome_usuario', 'Usuário')
+    logger.info(
+        f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] Usuário atual: {nome_usuario}")
     print(
         f"\n=== DEBUG: Nome do usuário passado para o template: {nome_usuario}")
     print(f"=== DEBUG: Sessão completa: {request.session.items()}")
@@ -204,6 +214,8 @@ def visualizar_pagamentos(request):
         'request': request
     }
 
+    logger.info(
+        f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] Visualizar pagamentos concluído com sucesso")
     print(f"=== DEBUG: Contexto enviado para o template: {context}")
 
     return render(request, 'loja/visualizar_pagamentos.html', context)
