@@ -205,41 +205,26 @@ class ComprovanteAdmin(admin.ModelAdmin):
 
 @admin.register(LogAcesso)
 class LogAcessoAdmin(admin.ModelAdmin):
-    list_display = ('usuario', 'get_data_acesso_ajustada',
-                    'moedas_disponiveis', 'moedas_usadas')
-    list_filter = ('data_acesso', 'usuario')
+    list_display = ('usuario', 'moedas_disponiveis',
+                    'moedas_usadas', 'data_acesso')
+    list_filter = ('data_acesso',)
     search_fields = ('usuario',)
+    date_hierarchy = 'data_acesso'
     ordering = ('-data_acesso',)
-    readonly_fields = ('usuario', 'data_acesso',
-                       'moedas_disponiveis', 'moedas_usadas')
-    change_list_template = 'admin/loja/logacesso/change_list.html'
 
-    def get_data_acesso_ajustada(self, obj):
-        return obj.get_data_acesso_ajustada().strftime('%d/%m/%Y %H:%M:%S')
-    get_data_acesso_ajustada.short_description = 'Data de Acesso (GMT-4)'
+    def has_add_permission(self, request):
+        return False
 
-    def get_urls(self):
-        urls = super().get_urls()
-        custom_urls = [
-            path('limpar/', self.admin_site.admin_view(self.limpar_logs),
-                 name='limpar_logs'),
-        ]
-        return custom_urls + urls
+    def has_change_permission(self, request, obj=None):
+        return False
 
-    def limpar_logs(self, request):
-        if request.method == 'POST':
-            try:
-                with transaction.atomic():
-                    LogAcesso.objects.all().delete()
-                    messages.success(
-                        request, 'Todos os logs de acesso foram removidos com sucesso!')
-            except Exception as e:
-                messages.error(request, f'Erro ao remover logs: {str(e)}')
-        return redirect('admin:loja_logacesso_changelist')
+    def has_delete_permission(self, request, obj=None):
+        return True
 
     def changelist_view(self, request, extra_context=None):
-        extra_context = extra_context or {}
-        extra_context['show_clear_button'] = True
+        if not extra_context:
+            extra_context = {}
+        extra_context['title'] = 'Logs de Acesso'
         return super().changelist_view(request, extra_context=extra_context)
 
 
