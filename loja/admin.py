@@ -211,6 +211,7 @@ class LogAcessoAdmin(admin.ModelAdmin):
     search_fields = ('usuario',)
     date_hierarchy = 'data_acesso'
     ordering = ('-data_acesso',)
+    change_list_template = 'admin/loja/logacesso/change_list.html'
 
     def has_add_permission(self, request):
         return False
@@ -220,6 +221,25 @@ class LogAcessoAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return True
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path('limpar/', self.admin_site.admin_view(self.limpar_logs),
+                 name='limpar_logs'),
+        ]
+        return custom_urls + urls
+
+    def limpar_logs(self, request):
+        if request.method == 'POST':
+            try:
+                with transaction.atomic():
+                    LogAcesso.objects.all().delete()
+                    messages.success(
+                        request, 'Todos os logs de acesso foram removidos com sucesso!')
+            except Exception as e:
+                messages.error(request, f'Erro ao remover logs: {str(e)}')
+        return redirect('admin:loja_logacesso_changelist')
 
     def changelist_view(self, request, extra_context=None):
         if not extra_context:
