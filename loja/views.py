@@ -784,8 +784,25 @@ def logs_acesso_json(request):
         return JsonResponse({'error': str(e)}, status=500)
 
 
+@login_required
 def grafico_logs(request):
-    return render(request, 'loja/grafico_logs.html')
+    logs = LogAcesso.objects.all().order_by('data_acesso')
+    logs_data = []
+    for log in logs:
+        logs_data.append({
+            'usuario': log.usuario,
+            'moedas_disponiveis': float(log.moedas_disponiveis),
+            'moedas_usadas': float(log.moedas_usadas),
+            'data_acesso': log.data_acesso.isoformat(),
+            'total_moedas': float(log.moedas_disponiveis + log.moedas_usadas)
+        })
+    context = {
+        'logs': logs_data,
+        'total_registros': len(logs_data),
+        'data_inicial': logs_data[0]['data_acesso'] if logs_data else None,
+        'data_final': logs_data[-1]['data_acesso'] if logs_data else None
+    }
+    return render(request, 'loja/grafico_logs.html', context)
 
 
 @login_required
