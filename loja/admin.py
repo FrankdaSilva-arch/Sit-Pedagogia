@@ -249,13 +249,17 @@ class LogAcessoAdmin(admin.ModelAdmin):
         for log in logs:
             logs_data.append({
                 'usuario': log.usuario,
-                'moedas_disponiveis': log.moedas_disponiveis,
-                'moedas_usadas': log.moedas_usadas,
-                'data_acesso': log.data_acesso.isoformat()
+                'moedas_disponiveis': float(log.moedas_disponiveis),
+                'moedas_usadas': float(log.moedas_usadas),
+                'data_acesso': log.data_acesso.isoformat(),
+                'total_moedas': float(log.moedas_disponiveis + log.moedas_usadas)
             })
         context = {
             'logs': logs_data,
             'title': 'Gráfico de Logs de Acesso',
+            'total_registros': len(logs_data),
+            'data_inicial': logs_data[0]['data_acesso'] if logs_data else None,
+            'data_final': logs_data[-1]['data_acesso'] if logs_data else None
         }
         return render(request, 'admin/loja/logacesso/grafico.html', context)
 
