@@ -3,6 +3,11 @@
 
 {% block object-tools-items %}
     <li>
+        <a href="{% url 'admin:grafico_logs' %}" class="button">
+            Ver Gráfico
+        </a>
+    </li>
+    <li>
         <form method="post" action="{% url 'admin:limpar_logs' %}">
             {% csrf_token %}
             <button type="submit" class="button" style="background-color: #ba2121; color: white;">

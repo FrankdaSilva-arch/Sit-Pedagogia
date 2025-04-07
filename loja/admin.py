@@ -227,6 +227,8 @@ class LogAcessoAdmin(admin.ModelAdmin):
         custom_urls = [
             path('limpar/', self.admin_site.admin_view(self.limpar_logs),
                  name='limpar_logs'),
+            path('grafico/', self.admin_site.admin_view(self.grafico_logs),
+                 name='grafico_logs'),
         ]
         return custom_urls + urls
 
@@ -240,6 +242,14 @@ class LogAcessoAdmin(admin.ModelAdmin):
             except Exception as e:
                 messages.error(request, f'Erro ao remover logs: {str(e)}')
         return redirect('admin:loja_logacesso_changelist')
+
+    def grafico_logs(self, request):
+        logs = LogAcesso.objects.all().order_by('data_acesso')
+        context = {
+            'logs': logs,
+            'title': 'Gráfico de Logs de Acesso',
+        }
+        return render(request, 'admin/loja/logacesso/grafico.html', context)
 
     def changelist_view(self, request, extra_context=None):
         if not extra_context:
