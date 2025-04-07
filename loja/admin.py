@@ -245,8 +245,16 @@ class LogAcessoAdmin(admin.ModelAdmin):
 
     def grafico_logs(self, request):
         logs = LogAcesso.objects.all().order_by('data_acesso')
+        logs_data = []
+        for log in logs:
+            logs_data.append({
+                'usuario': log.usuario,
+                'moedas_disponiveis': log.moedas_disponiveis,
+                'moedas_usadas': log.moedas_usadas,
+                'data_acesso': log.data_acesso.isoformat()
+            })
         context = {
-            'logs': logs,
+            'logs': logs_data,
             'title': 'Gráfico de Logs de Acesso',
         }
         return render(request, 'admin/loja/logacesso/grafico.html', context)

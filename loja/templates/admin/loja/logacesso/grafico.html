@@ -12,6 +12,9 @@
         <div style="width: 100%; height: 500px;">
             <canvas id="graficoLogs"></canvas>
         </div>
+        <div style="margin-top: 20px;">
+            <a href="{% url 'admin:loja_logacesso_changelist' %}" class="button">Voltar para Lista de Logs</a>
+        </div>
     </div>
 {% endblock %}
 
@@ -23,7 +26,14 @@
             var ctx = document.getElementById('graficoLogs').getContext('2d');
             var logs = {{ logs|safe }};
             var labels = logs.map(function(log) {
-                return new Date(log.data_acesso).toLocaleString();
+                return new Date(log.data_acesso).toLocaleString('pt-BR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
             });
             var moedasDisponiveis = logs.map(function(log) {
                 return log.moedas_disponiveis;
@@ -41,13 +51,17 @@
                             label: 'Moedas Disponíveis',
                             data: moedasDisponiveis,
                             borderColor: 'rgb(75, 192, 192)',
-                            tension: 0.1
+                            backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                            tension: 0.1,
+                            fill: true
                         },
                         {
                             label: 'Moedas Usadas',
                             data: moedasUsadas,
                             borderColor: 'rgb(255, 99, 132)',
-                            tension: 0.1
+                            backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                            tension: 0.1,
+                            fill: true
                         }
                     ]
                 },
@@ -56,7 +70,26 @@
                     maintainAspectRatio: false,
                     scales: {
                         y: {
-                            beginAtZero: true
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Quantidade de Moedas'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Data e Hora'
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y;
+                                }
+                            }
                         }
                     }
                 }
