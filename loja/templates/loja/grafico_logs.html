@@ -8,26 +8,13 @@
             <div class="card">
                 <div class="card-header">
                     <h2 class="text-center">Gráfico de Logs de Acesso</h2>
+                    <div class="text-center">
+                        <small class="text-muted">Última atualização: <span id="ultima-atualizacao"></span> (UTC-4)</small>
+                    </div>
                 </div>
                 <div class="card-body">
-                    <div class="info-box mb-4">
-                        <p class="mb-1"><strong>Total de Registros:</strong> {{ total_registros }}</p>
-                        {% if data_inicial %}
-                            <p class="mb-1"><strong>Período:</strong> 
-                                {{ data_inicial|date:"d/m/Y H:i:s" }} até 
-                                {{ data_final|date:"d/m/Y H:i:s" }}
-                            </p>
-                        {% endif %}
-                    </div>
-
-                    <div style="width: 100%; height: 500px;">
-                        <canvas id="graficoLogs"></canvas>
-                    </div>
-
-                    <div class="text-center mt-4">
-                        <a href="{% url 'loja:visualizar_pagamentos' %}" class="btn btn-primary">
-                            Voltar para Pagamentos
-                        </a>
+                    <div style="width: 100%; height: 400px; overflow-x: auto;">
+                        <canvas id="graficoLogs" style="min-width: 1500px;"></canvas>
                     </div>
                 </div>
             </div>
@@ -36,108 +23,273 @@
 </div>
 {% endblock %}
 
-{% block extra_css %}
-<style>
-    .info-box {
-        background: #f8f9fa;
-        border: 1px solid #dee2e6;
-        border-radius: 4px;
-        padding: 15px;
-        margin-bottom: 20px;
-    }
-    .info-box p {
-        margin: 5px 0;
-    }
-</style>
-{% endblock %}
-
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@0.7.0"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        var ctx = document.getElementById('graficoLogs').getContext('2d');
-        var logs = {{ logs|safe }};
-        var labels = logs.map(function(log) {
-            return new Date(log.data_acesso).toLocaleString('pt-BR', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-            });
-        });
-        var moedasDisponiveis = logs.map(function(log) {
-            return log.moedas_disponiveis;
-        });
-        var moedasUsadas = logs.map(function(log) {
-            return log.moedas_usadas;
-        });
-        var totalMoedas = logs.map(function(log) {
-            return log.total_moedas;
-        });
+    console.log('Script grafico_logs.html iniciado.'); // Log 1: Script iniciado
 
-        new Chart(ctx, {
-            type: 'line',
+    let chart;
+    let ultimaAtualizacao = new Date();
+
+    function formatarDataUTC4(data) {
+        // Verifica se a data já está no fuso horário UTC-4
+        // console.log("Formatando data:", data); // Log temporário
+        if (!data || !(data instanceof Date)) {
+            console.error("formatarDataUTC4 recebeu data inválida:", data);
+            return "Data inválida";
+        }
+
+        return data.toLocaleString('pt-BR', {
+            timeZone: 'America/Manaus',
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+    }
+
+    function atualizarDataAtualizacao() {
+        const spanAtualizacao = document.getElementById('ultima-atualizacao');
+        if (spanAtualizacao) {
+             spanAtualizacao.textContent = formatarDataUTC4(ultimaAtualizacao);
+        } else {
+            console.error("Elemento 'ultima-atualizacao' não encontrado.");
+        }
+    }
+
+    function atualizarGrafico() {
+        console.log('Chamando atualizarGrafico...'); // Log 2: Função de atualização chamada
+        fetch('/grafico-logs/dados/') // Certifique-se que esta URL está correta em urls.py
+            .then(response => {
+                console.log('Fetch response status:', response.status); // Log 3: Status da resposta Fetch
+                if (!response.ok) {
+                    throw new Error('Erro na rede ao buscar dados do gráfico: ' + response.statusText);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Dados recebidos via Fetch:', data); // Log 4: Dados recebidos
+                ultimaAtualizacao = new Date();
+                atualizarDataAtualizacao();
+
+                if (!data || !data.logs || data.logs.length === 0) {
+                    console.warn("Nenhum dado de log recebido ou formato inválido.");
+                    // Limpar o gráfico
+                    if (chart) {
+                        chart.data.labels = [];
+                        chart.data.datasets[0].data = [];
+                        chart.data.datasets[1].data = [];
+                        chart.update();
+                    }
+                    return;
+                }
+
+                // Preparar dados para o gráfico (uma entrada por log)
+                var labels = [];
+                var moedasDisponiveis = [];
+                var moedasUsadas = [];
+
+                data.logs.forEach(function(log) {
+                    // Pegar nome simplificado
+                    const nomeCompleto = log.nome_completo || (log.usuario || "Desconhecido");
+                    const nomeCompletoParts = nomeCompleto.split(' ');
+                    const nomeSimplificado = nomeCompletoParts[0] + (nomeCompletoParts.length > 1 ? ' ' + nomeCompletoParts[1] : '');
+
+                    // Formatar data e hora deste log específico
+                    const dataAcesso = new Date(log.data_acesso);
+                    const dataFormatada = formatarDataUTC4(dataAcesso);
+
+                    // Criar label único para esta entrada
+                    labels.push(nomeSimplificado + ' - ' + dataFormatada);
+
+                    // Adicionar dados de moedas deste log
+                    moedasDisponiveis.push(log.moedas_disponiveis || 0);
+                    moedasUsadas.push(log.moedas_usadas || 0);
+                });
+
+                console.log('Labels para o gráfico (individuais):', labels);
+                console.log('Dados Moedas Disponíveis (individuais):', moedasDisponiveis);
+                console.log('Dados Moedas Usadas (individuais):', moedasUsadas);
+
+                // Atualizar dados do gráfico
+                if (chart) {
+                    chart.data.labels = labels;
+                    chart.data.datasets[0].data = moedasDisponiveis;
+                    chart.data.datasets[1].data = moedasUsadas;
+                    chart.update();
+                    console.log('Chart atualizado com logs individuais.');
+                } else {
+                    console.error("Variável 'chart' não está definida ao tentar atualizar.");
+                }
+            })
+            .catch(error => {
+                 console.error('Erro no Fetch ou processamento:', error); // Log 10: Erro no fetch
+                 // Exibir mensagem de erro para o usuário, se apropriado
+             });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOMContentLoaded disparado.'); // Log 11: DOM carregado
+        const ctx = document.getElementById('graficoLogs')?.getContext('2d');
+        if (!ctx) {
+            console.error("Elemento canvas 'graficoLogs' não encontrado ou não é um canvas.");
+            return;
+        }
+
+        // Tentar obter dados iniciais passados pelo Django
+        let initialLabels = [];
+        let initialMoedasDisponiveis = [];
+        let initialMoedasUsadas = [];
+        try {
+            // Pegar a string JSON passada pelo Django
+            const logsJsonString = '{{ logs_json|escapejs }}';
+            console.log('String JSON inicial recebida:', logsJsonString); // Log 12a: String JSON
+
+            // Fazer parse da string JSON para um objeto/array JavaScript
+            const logsIniciais = JSON.parse(logsJsonString);
+            console.log('Objeto JS inicial após parse:', logsIniciais); // Log 12b: Objeto JS
+
+            if (logsIniciais && logsIniciais.length > 0) {
+                // Processar dados iniciais...
+                // (Restante da lógica como antes)
+                 logsIniciais.forEach(log => {
+                    const dataAcesso = new Date(log.data_acesso);
+                    const dataFormatada = formatarDataUTC4(dataAcesso);
+                    const nomeCompletoParts = log.nome_completo.split(' ');
+                    const nomeSimplificado = nomeCompletoParts[0] + (nomeCompletoParts.length > 1 ? ' ' + nomeCompletoParts[1] : '');
+
+                    initialLabels.push(nomeSimplificado + ' - ' + dataFormatada);
+                    initialMoedasDisponiveis.push(log.moedas_disponiveis || 0);
+                    initialMoedasUsadas.push(log.moedas_usadas || 0);
+                });
+            }
+        } catch (e) {
+            console.error('Erro ao processar dados iniciais JSON:', e, "String recebida:", '{{ logs_json|escapejs }}'); // Log 13: Erro
+            // Continuar mesmo se os dados iniciais falharem
+        }
+
+        chart = new Chart(ctx, {
+            type: 'bar',
             data: {
-                labels: labels,
+                labels: initialLabels, // Usar dados iniciais
                 datasets: [
                     {
                         label: 'Moedas Disponíveis',
-                        data: moedasDisponiveis,
-                        borderColor: 'rgb(75, 192, 192)',
-                        backgroundColor: 'rgba(75, 192, 192, 0.1)',
-                        tension: 0.1,
-                        fill: true
+                        data: initialMoedasDisponiveis, // Usar dados iniciais
+                        backgroundColor: 'rgba(0, 123, 255, 0.5)',
+                        borderColor: '#0056b3',
+                        borderWidth: 1,
+                        barThickness: 30,
+                        barPercentage: 0.5,
+                        categoryPercentage: 0.7
                     },
                     {
                         label: 'Moedas Usadas',
-                        data: moedasUsadas,
-                        borderColor: 'rgb(255, 99, 132)',
-                        backgroundColor: 'rgba(255, 99, 132, 0.1)',
-                        tension: 0.1,
-                        fill: true
-                    },
-                    {
-                        label: 'Total de Moedas',
-                        data: totalMoedas,
-                        borderColor: 'rgb(153, 102, 255)',
-                        backgroundColor: 'rgba(153, 102, 255, 0.1)',
-                        tension: 0.1,
-                        fill: true,
-                        borderDash: [5, 5]
+                        data: initialMoedasUsadas, // Usar dados iniciais
+                        backgroundColor: 'rgba(220, 53, 69, 0.5)',
+                        borderColor: '#a71d2a',
+                        borderWidth: 1,
+                        barThickness: 30,
+                        barPercentage: 0.5,
+                        categoryPercentage: 0.7
                     }
                 ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Quantidade de Moedas'
-                        }
-                    },
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Data e Hora'
-                        }
+                layout: {
+                    padding: {
+                        left: 15,
+                        right: 15,
+                        top: 15,
+                        bottom: 15
                     }
+                },
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero: true,
+                            padding: 5,
+                            fontSize: 10
+                        },
+                        scaleLabel: {
+                            display: true,
+                            labelString: 'Quantidade de Moedas',
+                            fontSize: 12,
+                            fontStyle: 'bold'
+                        },
+                        gridLines: {
+                            color: 'rgba(0, 0, 0, 0.1)',
+                            drawBorder: true
+                        }
+                    }],
+                    xAxes: [{
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45,
+                            padding: 5,
+                            fontSize: 10
+                        },
+                        gridLines: {
+                            display: false
+                        }
+                    }]
                 },
                 plugins: {
                     tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleFontSize: 12,
+                        titleFontWeight: 'bold',
+                        titleFontStyle: 'bold',
+                        bodyFontSize: 10,
+                        bodyFontStyle: 'normal',
+                        padding: 8,
                         callbacks: {
-                            label: function(context) {
-                                return context.dataset.label + ': ' + context.parsed.y;
+                            label: function(tooltipItem, data) {
+                                var label = data.datasets[tooltipItem.datasetIndex].label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += tooltipItem.yLabel;
+                                return label;
                             }
+                        }
+                    },
+                    legend: {
+                        position: 'top',
+                        align: 'center',
+                        labels: {
+                            padding: 10,
+                            fontSize: 12
+                        }
+                    },
+                    datalabels: {
+                        display: true,
+                        color: '#fff',
+                        anchor: 'center',
+                        align: 'center',
+                        font: {
+                            weight: 'bold'
+                        },
+                        formatter: function(value, context) {
+                            return Math.round(value);
                         }
                     }
                 }
             }
         });
+        console.log('Chart inicializado.'); // Log 14: Gráfico inicializado
+
+        atualizarDataAtualizacao();
+        atualizarGrafico(); // Chamar para buscar dados frescos imediatamente
+
+        // Atualizar a cada 30 segundos (opcional)
+        // setInterval(atualizarGrafico, 30000); // 30000 ms = 30 segundos
+
     });
 </script>
 {% endblock %} 

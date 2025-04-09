@@ -2,11 +2,13 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.urls import reverse, path
 from django.shortcuts import render, redirect
-from .models import Produto, Pedido, ConfiguracaoPagamento, Comprador, Comprovante, Moeda, LogAcesso
+from .models import Produto, Pedido, ConfiguracaoPagamento, Comprador, Comprovante, Moeda, LogAcesso, ConfiguracaoFusoHorario
 import logging
 from django.contrib import messages
 from django.utils import timezone
 from django.db import transaction
+import pytz
+from .timezone_utils import ajustar_horario
 
 # Configuração básica de logging
 logging.basicConfig(level=logging.DEBUG)
@@ -206,12 +208,16 @@ class ComprovanteAdmin(admin.ModelAdmin):
 @admin.register(LogAcesso)
 class LogAcessoAdmin(admin.ModelAdmin):
     list_display = ('usuario', 'moedas_disponiveis',
-                    'moedas_usadas', 'data_acesso')
+                    'moedas_usadas', 'get_data_acesso_ajustada')
     list_filter = ('data_acesso',)
     search_fields = ('usuario',)
     date_hierarchy = 'data_acesso'
     ordering = ('-data_acesso',)
     change_list_template = 'admin/loja/logacesso/change_list.html'
+
+    def get_data_acesso_ajustada(self, obj):
+        return obj.get_data_acesso_ajustada().strftime('%d/%m/%Y %H:%M:%S')
+    get_data_acesso_ajustada.short_description = 'Data de Acesso (UTC-4)'
 
     def has_add_permission(self, request):
         return False
@@ -294,3 +300,21 @@ class MoedaAdmin(admin.ModelAdmin):
             'title': 'Logs de Acesso',
         }
         return render(request, 'admin/loja/moeda/logs.html', context)
+
+
+@admin.register(ConfiguracaoFusoHorario)
+class ConfiguracaoFusoHorarioAdmin(admin.ModelAdmin):
+    list_display = ('fuso_horario', 'ultima_atualizacao_ajustada')
+    readonly_fields = ('ultima_atualizacao_ajustada',)
+
+    def ultima_atualizacao_ajustada(self, obj):
+        return obj.get_ultima_atualizacao_ajustada().strftime('%d/%m/%Y %H:%M:%S')
+    ultima_atualizacao_ajustada.short_description = 'Última Atualização'
+
+    def has_add_permission(self, request):
+        # Permite adicionar apenas se não existir nenhuma configuração
+        return not ConfiguracaoFusoHorario.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        # Não permite deletar a configuração
+        return False

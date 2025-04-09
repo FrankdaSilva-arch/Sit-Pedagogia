@@ -4,6 +4,8 @@ from django.db import models
 from django.utils.html import format_html
 from django.contrib.auth.models import User
 from django.utils import timezone
+import pytz
+from .timezone_utils import ajustar_horario
 
 
 class Produto(models.Model):
@@ -55,33 +57,28 @@ class Pedido(models.Model):
     def __str__(self):
         return f'Pedido #{self.id} - {self.nome_comprador}'
 
+    def get_data_ajustada(self):
+        """Retorna a data no fuso horário de Manaus (UTC-4)"""
+        print(f"\n=== DEBUG: Modelo Pedido - get_data_ajustada ===")
+        print(f"Data original: {self.data}")
+        print(f"Data é timezone-aware: {timezone.is_aware(self.data)}")
+        if timezone.is_aware(self.data):
+            print(f"Timezone original: {self.data.tzinfo}")
+
+        if not timezone.is_aware(self.data):
+            self.data = timezone.make_aware(self.data)
+        manaus_tz = pytz.timezone('America/Manaus')
+        data_ajustada = self.data.astimezone(manaus_tz)
+
+        print(f"Data ajustada: {data_ajustada}")
+        print(f"Timezone ajustado: {data_ajustada.tzinfo}")
+        return data_ajustada
+
     def visualizar_comprovante(self):
         comprovantes = self.comprovantes.all()
         if comprovantes:
-            comprovante = comprovantes.first()  # Pega o primeiro comprovante
-            if comprovante.arquivo.name.lower().endswith('.pdf'):
-                return format_html(
-                    '<a href="{}" target="_blank" class="comprovante-link">'
-                    '<div class="pdf-icon">'
-                    '<div class="pdf-icon-corner"></div>'
-                    '<div class="pdf-icon-text">PDF</div>'
-                    '</div>'
-                    '<span class="pdf-label">Visualizar PDF</span></a>',
-                    comprovante.arquivo.url
-                )
-            elif comprovante.arquivo.name.lower().endswith(('.jpg', '.jpeg', '.png', '.gif')):
-                return format_html(
-                    '<a href="{}" target="_blank" class="comprovante-link">'
-                    '<img src="{}" class="comprovante-imagem"/></a>',
-                    comprovante.arquivo.url,
-                    comprovante.arquivo.url
-                )
-            return format_html(
-                '<a href="{}" target="_blank">Visualizar arquivo</a>',
-                comprovante.arquivo.url
-            )
-        return "Sem comprovante"
-    visualizar_comprovante.short_description = "Comprovante"
+            return format_html('<a href="{}">Ver Comprovantes ({})</a>', self.id, comprovantes.count())
+        return "Sem comprovantes"
 
 
 class Comprovante(models.Model):
@@ -178,15 +175,50 @@ class LogAcesso(models.Model):
     data_acesso = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        # Ajusta o horário para GMT-4
-        hora_correta = self.data_acesso - timezone.timedelta(hours=4)
-        return f"{self.usuario} - {hora_correta.strftime('%d/%m/%Y %H:%M:%S')} (GMT-4)"
+        # Usa o fuso horário configurado
+        hora_correta = ajustar_horario(self.data_acesso)
+        return f"{self.usuario} - {hora_correta.strftime('%d/%m/%Y %H:%M:%S')}"
 
     def get_data_acesso_ajustada(self):
-        # Ajusta o horário para GMT-4
-        return self.data_acesso - timezone.timedelta(hours=4)
+        # Usa o fuso horário configurado
+        return ajustar_horario(self.data_acesso)
 
     class Meta:
         verbose_name = "Log de Acesso"
         verbose_name_plural = "Logs de Acesso"
         ordering = ['-data_acesso']
+
+
+class ConfiguracaoFusoHorario(models.Model):
+    FUSO_CHOICES = [
+        ('America/Manaus', 'UTC-4 (Horário de Manaus - AMT)'),
+        ('America/Sao_Paulo', 'UTC-3 (Horário de Brasília - BRT)'),
+    ]
+
+    fuso_horario = models.CharField(
+        max_length=50,
+        choices=FUSO_CHOICES,
+        default='America/Manaus',
+        verbose_name='Fuso Horário'
+    )
+    ultima_atualizacao = models.DateTimeField(
+        auto_now=True,
+        verbose_name='Última Atualização'
+    )
+
+    class Meta:
+        verbose_name = 'Configuração de Fuso Horário'
+        verbose_name_plural = 'Configurações de Fuso Horário'
+
+    def __str__(self):
+        return f'Fuso Horário: Manaus, Amazonas (UTC-4)'
+
+    def save(self, *args, **kwargs):
+        # Garante que só existe uma configuração
+        if ConfiguracaoFusoHorario.objects.exists() and not self.pk:
+            raise ValueError('Já existe uma configuração de fuso horário')
+        super().save(*args, **kwargs)
+
+    def get_ultima_atualizacao_ajustada(self):
+        """Retorna a última atualização no fuso horário correto"""
+        return ajustar_horario(self.ultima_atualizacao)

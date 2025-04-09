@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.contrib import messages
-from .models import Produto, Pedido, Comprovante, ConfiguracaoPagamento, Comprador, Moeda, LogAcesso
+from .models import Produto, Pedido, Comprovante, ConfiguracaoPagamento, Comprador, Moeda, LogAcesso, ConfiguracaoFusoHorario
 from .forms import ComprovanteForm
 from django.core.files.storage import FileSystemStorage
 import logging
@@ -29,6 +29,8 @@ from django.contrib.auth import logout
 from django.contrib.auth.decorators import user_passes_test
 from django.core.exceptions import PermissionDenied
 import pytz
+from .timezone_utils import ajustar_horario
+from django.core.serializers.json import DjangoJSONEncoder
 
 # Configurar logging
 logger = logging.getLogger(__name__)
@@ -156,10 +158,13 @@ def visualizar_pagamentos(request):
         # Busca os pedidos deste produto
         pedidos = Pedido.objects.filter(produto=produto).order_by('-data')
 
-        # Ajusta o horário para GMT-4 em todos os pedidos
+        # Ajusta o horário para cada pedido usando a função ajustar_horario
         for pedido in pedidos:
-            pedido.data = pedido.data - timezone.timedelta(hours=4)
-            print(f"=== DEBUG: Data do pedido ajustada: {pedido.data}")
+            logger.debug(
+                f"Ajustando horário para o pedido ID {pedido.id}: Horário original: {pedido.data}")
+            pedido.data = ajustar_horario(pedido.data)
+            logger.debug(
+                f"Horário ajustado para o pedido ID {pedido.id}: Novo horário: {pedido.data}")
 
         # Busca compradores que não compraram cotas deste produto
         compradores_sem_cotas = []
@@ -232,6 +237,7 @@ def iniciar_contagem(request):
         # Salva todos os pedidos existentes com seus comprovantes
         pedidos = []
         for pedido in Pedido.objects.all():
+            print(f"Pedido ID: {pedido.id}, Data original: {pedido.data}")
             pedido_data = {
                 'id': pedido.id,
                 'nome_comprador': pedido.nome_comprador,
@@ -242,6 +248,7 @@ def iniciar_contagem(request):
                 'data': pedido.data,
                 'comprovantes': list(pedido.comprovantes.all().values())
             }
+            print(f"Data enviada para a interface: {pedido.data}")
             pedidos.append(pedido_data)
 
         total_pedidos = len(pedidos)
@@ -785,24 +792,48 @@ def logs_acesso_json(request):
 
 
 @login_required
+@user_passes_test(lambda u: u.is_staff or u.is_superuser)
 def grafico_logs(request):
-    logs = LogAcesso.objects.all().order_by('data_acesso')
+    logs = LogAcesso.objects.all().order_by('-data_acesso')
     logs_data = []
+
     for log in logs:
+        # Verificar o tipo de log.usuario antes de obter o nome
+        if isinstance(log.usuario, User):
+            # É um objeto User, tenta obter o nome completo
+            nome_completo = log.usuario.get_full_name(
+            ) if log.usuario.get_full_name() else str(log.usuario)
+        else:
+            # Provavelmente é uma string (ou None), usa a representação de string
+            nome_completo = str(
+                log.usuario) if log.usuario else "Usuário Desconhecido"
+
+        # Ajustar para UTC-4
+        # logger.debug(f"Ajustando horário para o log do usuário {log.usuario}: Horário original: {log.data_acesso}") # Removido ou comentado se não for mais necessário
+        data_ajustada = ajustar_horario(log.data_acesso)
+        # logger.debug(f"Horário ajustado para o log do usuário {log.usuario}: Novo horário: {data_ajustada}") # Removido ou comentado se não for mais necessário
+
         logs_data.append({
-            'usuario': log.usuario,
-            'moedas_disponiveis': float(log.moedas_disponiveis),
-            'moedas_usadas': float(log.moedas_usadas),
-            'data_acesso': log.data_acesso.isoformat(),
-            'total_moedas': float(log.moedas_disponiveis + log.moedas_usadas)
+            # Passa o username ou representação de string para o contexto
+            'usuario': str(log.usuario) if log.usuario else "Desconhecido",
+            'nome_completo': nome_completo,
+            'moedas_disponiveis': log.moedas_disponiveis,
+            'moedas_usadas': log.moedas_usadas,
+            'data_acesso': data_ajustada  # Manter como objeto datetime aqui
         })
-    context = {
-        'logs': logs_data,
-        'total_registros': len(logs_data),
-        'data_inicial': logs_data[0]['data_acesso'] if logs_data else None,
-        'data_final': logs_data[-1]['data_acesso'] if logs_data else None
-    }
-    return render(request, 'loja/grafico_logs.html', context)
+
+    # Log dos dados Python antes da conversão
+    logger.info(
+        f"[grafico_logs view] Dados iniciais (Python) para template: {logs_data}")
+
+    # Converter a lista Python para uma string JSON
+    logs_json = json.dumps(logs_data, cls=DjangoJSONEncoder)
+    # Log do JSON
+    logger.info(
+        f"[grafico_logs view] Dados iniciais (JSON) para template: {logs_json}")
+
+    # Passar a string JSON para o template
+    return render(request, 'loja/grafico_logs.html', {'logs_json': logs_json})
 
 
 @login_required
@@ -873,3 +904,42 @@ def processar_pagamento(request):
 
     print("=== DEBUG: Redirecionando para lista_produtos")
     return redirect('loja:lista_produtos')
+
+
+@login_required
+@user_passes_test(lambda u: u.is_staff or u.is_superuser)
+def grafico_logs_dados(request):
+    logs = LogAcesso.objects.all().order_by('data_acesso')
+    logs_data = []
+    for log in logs:
+        # Corrigido: Verificar tipo e usar get_full_name
+        if isinstance(log.usuario, User):
+            nome_completo = log.usuario.get_full_name(
+            ) if log.usuario.get_full_name() else str(log.usuario)
+        else:
+            nome_completo = str(
+                log.usuario) if log.usuario else "Usuário Desconhecido"
+
+        # Corrigido: Usar a função ajustar_horario
+        data_ajustada = ajustar_horario(log.data_acesso)
+
+        logs_data.append({
+            # Corrigido: Enviar sempre string para o usuário
+            'usuario': str(log.usuario) if log.usuario else "Desconhecido",
+            'nome_completo': nome_completo,
+            'moedas_disponiveis': float(log.moedas_disponiveis),
+            'moedas_usadas': float(log.moedas_usadas),
+            'data_acesso': data_ajustada.isoformat(),  # Manter formato ISO para JS
+            'total_moedas': float(log.moedas_disponiveis + log.moedas_usadas)
+        })
+
+    # Adicionar log para verificar os dados antes de enviar JSON
+    logger.info(
+        f"[grafico_logs_dados view] Dados a serem enviados como JSON: {logs_data}")
+
+    return JsonResponse({
+        'logs': logs_data,
+        # É mais seguro converter para string aqui também, caso não haja logs
+        'data_inicial': logs_data[0]['data_acesso'] if logs_data else None,
+        'data_final': logs_data[-1]['data_acesso'] if logs_data else None
+    })

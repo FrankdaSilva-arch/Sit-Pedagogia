@@ -1,0 +1,73 @@
+{% extends "admin/change_form.html" %}
+{% load static %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+    .relogio-container {
+        background: #1a237e;
+        padding: 30px;
+        border-radius: 15px;
+        margin-bottom: 30px;
+        text-align: center;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .relogio {
+        font-size: 3.5em;
+        font-weight: bold;
+        color: #ffffff;
+        font-family: 'Courier New', monospace;
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        letter-spacing: 2px;
+    }
+    .data {
+        font-size: 1.5em;
+        color: #ffffff;
+        margin-top: 15px;
+        opacity: 0.9;
+    }
+    .fuso-horario {
+        font-size: 1.2em;
+        color: #ffffff;
+        margin-top: 10px;
+        opacity: 0.8;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="relogio-container">
+    <div class="relogio" id="relogio">00:00:00</div>
+    <div class="data" id="data">00/00/0000</div>
+    <div class="fuso-horario">Manaus, Amazonas (UTC-4)</div>
+</div>
+
+{{ block.super }}
+
+<script>
+    function atualizarRelogio() {
+        const agora = new Date();
+        const opcoes = {
+            timeZone: 'America/Manaus',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+        };
+        const dataOpcoes = {
+            timeZone: 'America/Manaus',
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        };
+        
+        document.getElementById('relogio').textContent = agora.toLocaleTimeString('pt-BR', opcoes);
+        document.getElementById('data').textContent = agora.toLocaleDateString('pt-BR', dataOpcoes);
+    }
+
+    // Atualiza o relógio a cada segundo
+    setInterval(atualizarRelogio, 1000);
+    // Inicializa o relógio imediatamente
+    atualizarRelogio();
+</script>
+{% endblock %} 

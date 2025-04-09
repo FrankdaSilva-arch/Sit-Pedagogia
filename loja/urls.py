@@ -42,5 +42,7 @@ urlpatterns = [
     path('buscar-pedido/', views.buscar_pedido, name='buscar_pedido'),
     path('logs-acesso-json/', views.logs_acesso_json, name='logs_acesso_json'),
     path('grafico-logs/', views.grafico_logs, name='grafico_logs'),
+    path('grafico-logs/dados/', views.grafico_logs_dados,
+         name='grafico_logs_dados'),
     path('admin/loja/logacesso/limpar/', views.limpar_logs, name='limpar_logs'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

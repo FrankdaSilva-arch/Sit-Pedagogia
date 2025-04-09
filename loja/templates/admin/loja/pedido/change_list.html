@@ -140,6 +140,12 @@
             if (numeroInicial) {
                 document.getElementById('numero_inicial').value = numeroInicial;
             }
+
+            // Exemplo de como adicionar um log para verificar a data
+            const dataElement = document.querySelector('.data-element'); // Supondo que haja um elemento com a classe 'data-element'
+            if (dataElement) {
+                console.log('Data exibida no frontend:', dataElement.textContent);
+            }
         });
 
         // Salva o valor quando o formulário é enviado
