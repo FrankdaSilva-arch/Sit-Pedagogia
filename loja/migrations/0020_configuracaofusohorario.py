@@ -4,7 +4,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('loja', '0016_logacesso'),
+        ('loja', '0015_moeda'),
     ]
 
     operations = [
