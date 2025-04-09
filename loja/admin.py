@@ -309,7 +309,10 @@ class ConfiguracaoFusoHorarioAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):
         # Permite adicionar apenas se não existir nenhuma configuração
-        return not ConfiguracaoFusoHorario.objects.exists()
+        try:
+            return not ConfiguracaoFusoHorario.objects.exists()
+        except:
+            return True
 
     def has_delete_permission(self, request, obj=None):
         # Não permite deletar a configuração
