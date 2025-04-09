@@ -304,12 +304,8 @@ class MoedaAdmin(admin.ModelAdmin):
 
 @admin.register(ConfiguracaoFusoHorario)
 class ConfiguracaoFusoHorarioAdmin(admin.ModelAdmin):
-    list_display = ('fuso_horario', 'ultima_atualizacao_ajustada')
-    readonly_fields = ('ultima_atualizacao_ajustada',)
-
-    def ultima_atualizacao_ajustada(self, obj):
-        return obj.get_ultima_atualizacao_ajustada().strftime('%d/%m/%Y %H:%M:%S')
-    ultima_atualizacao_ajustada.short_description = 'Última Atualização'
+    list_display = ('fuso_horario',)
+    fields = ('fuso_horario',)
 
     def has_add_permission(self, request):
         # Permite adicionar apenas se não existir nenhuma configuração
