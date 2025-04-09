@@ -7,13 +7,13 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
-                    <h2 class="text-center">Gráfico de Logs de Acesso</h2>
+                    <h5 class="card-title mb-0">Gráfico de Logs de Acesso</h5>
                     <div class="text-center">
                         <small class="text-muted">Última atualização: <span id="ultima-atualizacao"></span> (UTC-4)</small>
                     </div>
                 </div>
                 <div class="card-body">
-                    <div style="width: 100%; height: 400px; overflow-x: auto;">
+                    <div style="height: 500px; overflow-x: auto;">
                         <canvas id="graficoLogs" style="min-width: 1500px;"></canvas>
                     </div>
                 </div>
@@ -182,9 +182,10 @@
                         backgroundColor: 'rgba(0, 123, 255, 0.5)',
                         borderColor: '#0056b3',
                         borderWidth: 1,
-                        barThickness: 30,
-                        barPercentage: 0.5,
-                        categoryPercentage: 0.7
+                        barThickness: 15,
+                        maxBarThickness: 20,
+                        categoryPercentage: 0.7,
+                        barPercentage: 0.8
                     },
                     {
                         label: 'Moedas Usadas',
@@ -192,9 +193,10 @@
                         backgroundColor: 'rgba(220, 53, 69, 0.5)',
                         borderColor: '#a71d2a',
                         borderWidth: 1,
-                        barThickness: 30,
-                        barPercentage: 0.5,
-                        categoryPercentage: 0.7
+                        barThickness: 15,
+                        maxBarThickness: 20,
+                        categoryPercentage: 0.7,
+                        barPercentage: 0.8
                     }
                 ]
             },
