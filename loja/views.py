@@ -421,87 +421,94 @@ def buscar_compradores(request):
 
 def verificar_cota(request, produto_id, cota):
     try:
-        print(f"\n{Colors.CYAN}=== Iniciando verificação de cota ==={Colors.END}")
-        print(f"{Colors.BLUE}Produto ID: {produto_id}, Cota: {cota}{Colors.END}")
+        print(f"\n{Colors.CYAN}=== INÍCIO DA VERIFICAÇÃO DE COTA ==={Colors.END}")
+        print(f"{Colors.BLUE}Produto ID: {produto_id}{Colors.END}")
+        print(f"{Colors.BLUE}Cota: {cota}{Colors.END}")
+        print(
+            f"{Colors.BLUE}Nome do Comprador: {request.GET.get('nome_comprador')}{Colors.END}")
 
         produto = get_object_or_404(Produto, pk=produto_id)
         cota = int(cota)
+        nome_comprador = request.GET.get('nome_comprador')
         print(f"{Colors.GREEN}Produto encontrado: {produto.nome}{Colors.END}")
 
         # Verifica se a cota está dentro do range permitido
-        print(f"{Colors.YELLOW}Verificando range da cota: {produto.cota_inicial} - {produto.cota_final}{Colors.END}")
+        print(f"\n{Colors.YELLOW}=== VERIFICANDO RANGE DA COTA ==={Colors.END}")
+        print(
+            f"{Colors.YELLOW}Range permitido: {produto.cota_inicial} - {produto.cota_final}{Colors.END}")
         if cota < produto.cota_inicial or cota > produto.cota_final:
-            print(f"{Colors.RED}Cota fora do range permitido{Colors.END}")
+            print(f"{Colors.RED}Cota {cota} está fora do range permitido{Colors.END}")
             return JsonResponse({
                 'cota_ocupada': True,
                 'mensagem': 'Verifique o número da cota'
             })
+        print(f"{Colors.GREEN}Cota {cota} está dentro do range permitido{Colors.END}")
 
-        # Verifica se existe pedido pendente
-        print(
-            f"{Colors.YELLOW}Verificando pedidos PENDENTES para a cota {cota}{Colors.END}")
-        pedido_pendente = Pedido.objects.filter(
+        # Verifica se existe pedido com mesmo ID, nome e cota
+        print(f"\n{Colors.YELLOW}=== VERIFICANDO PEDIDOS EXISTENTES ==={Colors.END}")
+        pedido_existente = Pedido.objects.filter(
             produto=produto,
             cota=cota,
+            nome_comprador=nome_comprador,
             status='AGUARDANDO_PAGAMENTO'
         ).first()
 
-        if pedido_pendente:
+        if pedido_existente:
+            print(f"{Colors.YELLOW}Pedido existente encontrado:{Colors.END}")
+            print(f"{Colors.YELLOW}ID do Pedido: {pedido_existente.id}{Colors.END}")
             print(
-                f"{Colors.YELLOW}Pedido pendente encontrado: ID {pedido_pendente.id}{Colors.END}")
-            return JsonResponse({
-                'pedido_pendente': True,
-                'mensagem': 'Falta o comprovante de pagamento, você será direcionado para lá',
-                'pedido_id': pedido_pendente.id,
-                'produto_id': produto.id
-            })
+                f"{Colors.YELLOW}Nome do Comprador: {pedido_existente.nome_comprador}{Colors.END}")
+            print(f"{Colors.YELLOW}Cota: {pedido_existente.cota}{Colors.END}")
+            print(f"{Colors.YELLOW}Status: {pedido_existente.status}{Colors.END}")
+
+            # Verifica se tem comprovante
+            tem_comprovante = pedido_existente.comprovantes.exists()
+            print(f"{Colors.YELLOW}Tem comprovante: {tem_comprovante}{Colors.END}")
+
+            if not tem_comprovante:
+                print(
+                    f"{Colors.GREEN}Redirecionando para página de pagamento - Falta comprovante{Colors.END}")
+                return JsonResponse({
+                    'pedido_pendente': True,
+                    'mensagem': 'Falta o comprovante de pagamento',
+                    'pedido_id': pedido_existente.id,
+                    'produto_id': produto.id
+                })
+            else:
+                print(
+                    f"{Colors.GREEN}Redirecionando para página de pagamento - Pedido pendente{Colors.END}")
+                return JsonResponse({
+                    'pedido_pendente': True,
+                    'mensagem': 'Você tem um pedido pendente para esta cota',
+                    'pedido_id': pedido_existente.id,
+                    'produto_id': produto.id
+                })
 
         # Verifica se existe pedido pago para o comprador
-        nome_comprador = request.GET.get('nome_comprador')
-        if nome_comprador:
-            pedido_pago = Pedido.objects.filter(
-                produto=produto,
-                nome_comprador=nome_comprador,
-                status='PAGO'
-            ).first()
+        print(f"\n{Colors.YELLOW}=== VERIFICANDO PEDIDOS PAGOS ==={Colors.END}")
+        pedido_pago = Pedido.objects.filter(
+            produto=produto,
+            cota=cota,
+            status='PAGO',
+            nome_comprador=nome_comprador
+        ).exists()
 
-            if pedido_pago:
-                print(
-                    f"{Colors.YELLOW}Pedido pago encontrado para o comprador: {nome_comprador}{Colors.END}")
-                return JsonResponse({
-                    'cota_ocupada': True,
-                    'mensagem': 'Você já comprou essa cota'
-                })
+        if pedido_pago:
+            print(f"{Colors.RED}Comprador já comprou esta cota{Colors.END}")
+            return JsonResponse({
+                'cota_ocupada': True,
+                'mensagem': 'Você já comprou essa cota'
+            })
+        print(f"{Colors.GREEN}Comprador não tem pedido pago para esta cota{Colors.END}")
 
-            # Verifica se existe comprovante para o comprador
-            pedido_com_comprovante = Pedido.objects.filter(
-                produto=produto,
-                nome_comprador=nome_comprador,
-                comprovantes__isnull=False
-            ).first()
-
-            if pedido_com_comprovante:
-                print(
-                    f"{Colors.YELLOW}Comprovante encontrado para o comprador: {nome_comprador}{Colors.END}")
-                return JsonResponse({
-                    'cota_ocupada': True,
-                    'mensagem': 'Confirmação de pagamento'
-                })
-
-        print(f"{Colors.GREEN}Cota disponível para compra{Colors.END}")
+        print(f"\n{Colors.GREEN}=== COTA DISPONÍVEL PARA COMPRA ==={Colors.END}")
         return JsonResponse({
             'cota_disponivel': True,
             'mensagem': 'Cota disponível'
         })
-
-    except ValueError:
-        print(f"{Colors.RED}Erro: Cota inválida{Colors.END}")
-        return JsonResponse({
-            'cota_ocupada': True,
-            'mensagem': 'Cota inválida'
-        })
     except Exception as e:
-        print(f"{Colors.RED}Erro ao verificar cota: {str(e)}{Colors.END}")
+        print(f"\n{Colors.RED}=== ERRO NA VERIFICAÇÃO DE COTA ==={Colors.END}")
+        print(f"{Colors.RED}Erro: {str(e)}{Colors.END}")
         return JsonResponse({
             'cota_ocupada': True,
             'mensagem': 'Erro ao verificar cota'
