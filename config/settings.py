@@ -20,7 +20,10 @@ MIDDLEWARE = [
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],
+        'DIRS': [
+            os.path.join(BASE_DIR, 'templates'),
+            os.path.join(BASE_DIR, 'eventos', 'templates'),
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -40,7 +43,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'loja',  # apenas este app
+    'loja',
+    'eventos',
 ]
 
 # Adicione/atualize estas configurações
@@ -102,3 +106,5 @@ ADMIN_INDEX_TITLE = "Bem-vindo ao Portal de Administração"
 ADMIN_SITE_CSS = {
     'all': ('admin/css/custom_admin.css',),
 }
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

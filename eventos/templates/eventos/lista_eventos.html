@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="text-center mb-4">Eventos</h1>
+    <div class="row justify-content-center">
+        {% for evento in eventos %}
+        <div class="col-md-10 mb-4">
+            <div class="card">
+                {% if evento.imagens.first %}
+                <div class="card-img-container" style="height: 400px; overflow: hidden;">
+                    <img src="{{ evento.imagens.first.imagem.url }}" 
+                         class="card-img-top w-100"
+                         alt="{{ evento.titulo }}"
+                         style="object-fit: contain; height: 100%; width: 100%;">
+                </div>
+                {% endif %}
+                <div class="card-body text-center">
+                    <h3 class="card-title">{{ evento.titulo }}</h3>
+                    <h5 class="card-subtitle mb-3 text-muted">{{ evento.curso_responsavel }}</h5>
+                    <div class="card-text mb-3">
+                        <h6 class="fw-bold">{{ evento.tema }}</h6>
+                    </div>
+                    <div class="card-text mb-3">
+                        <p class="mb-1">
+                            <i class="bi bi-calendar-event"></i>
+                            <strong>Data:</strong> {{ evento.data|date:"d/m/Y H:i" }}
+                        </p>
+                        <p class="mb-1">
+                            <i class="bi bi-geo-alt"></i>
+                            <strong>Local:</strong> {{ evento.local }}
+                        </p>
+                    </div>
+                    <a href="{% url 'eventos:detalhe_evento' evento.pk %}" 
+                       class="btn btn-primary btn-lg">
+                        Ver mais detalhes
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center">
+            <p class="h4">Nenhum evento cadastrado.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %} 

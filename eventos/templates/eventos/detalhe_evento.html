@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8 mx-auto">
+
+            {# Carrossel centralizado no topo #}
+            {% if evento.imagens.all %}
+            <div class="mb-4 text-center">
+                <div id="carouselEvento" class="carousel slide mx-auto" data-bs-ride="carousel" data-bs-interval="3000" style="max-width: 600px;">
+                    <div class="carousel-inner">
+                        {% for imagem in evento.imagens.all %}
+                        <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                            <img src="{{ imagem.imagem.url }}" class="d-block w-100 mx-auto"
+                                 style="max-height: 400px; object-fit: contain;" alt="{{ imagem.legenda }}">
+                            {% if imagem.legenda %}
+                            <div class="carousel-caption d-none d-md-block">
+                                <p class="bg-dark bg-opacity-50 rounded p-1">{{ imagem.legenda }}</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% if evento.imagens.count > 1 %}
+                    <button class="carousel-control-prev" type="button" data-bs-target="#carouselEvento" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Anterior</span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#carouselEvento" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Próxima</span>
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Botão de inscrição -->
+            <div class="text-center mb-4">
+                <button type="button" class="btn btn-success btn-md fw-bold" style="font-size: 1rem; padding: 0.5rem 2rem;" data-bs-toggle="modal" data-bs-target="#modalInscricao">
+                    <i class="bi bi-person-plus"></i> Inscrição
+                </button>
+            </div>
+
+            <!-- Modal de escolha de categoria -->
+            <div class="modal fade" id="modalInscricao" tabindex="-1" aria-labelledby="modalInscricaoLabel" aria-hidden="true">
+              <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="modalInscricaoLabel">Escolha a categoria de inscrição</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                  </div>
+                  <div class="modal-body text-center">
+                    <a href="{% url 'eventos:inscricao_curso' evento.pk %}" class="btn btn-primary m-2">Cursos</a>
+                    <a href="{% url 'eventos:inscricao_convidado' evento.pk %}" class="btn btn-warning m-2">Convidado(a) Especial</a>
+                    <a href="{% url 'eventos:inscricao_publico' evento.pk %}" class="btn btn-info m-2">Público Geral</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {# Informações do evento abaixo do carrossel #}
+            <h1 class="text-center">{{ evento.titulo }}</h1>
+            <h4 class="text-muted text-center">{{ evento.tema }}</h4>
+            
+            <div class="mt-4">
+                <h5>Informações do Evento</h5>
+                <p><strong>Curso Responsável:</strong> {{ evento.curso_responsavel }}</p>
+                <p><strong>Data:</strong> {{ evento.data|date:"d/m/Y H:i" }}</p>
+                <p><strong>Local:</strong> {{ evento.local }}</p>
+            </div>
+
+            <div class="mt-4">
+                <h5>Descrição</h5>
+                <p>{{ evento.descricao|linebreaks }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,10 @@
+{% extends "admin/change_list.html" %}
+
+{% block content %}
+    {% if vagas_disponiveis is not None %}
+        <div class="alert alert-info" style="font-size: 1.2em;">
+            <strong>Vagas disponíveis:</strong> {{ vagas_disponiveis }}
+        </div>
+    {% endif %}
+    {{ block.super }}
+{% endblock %} 

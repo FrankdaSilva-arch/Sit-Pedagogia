@@ -1,0 +1,158 @@
+<!-- Bootstrap e Awesomplete -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/awesomplete/1.1.5/awesomplete.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/awesomplete/1.1.5/awesomplete.min.js"></script>
+
+<div class="container mt-5">
+    <h2 class="mb-4">Inscrição de Convidado Especial</h2>
+    <div class="alert alert-info mb-2">
+        Vagas disponível: {{ total_vagas_disponivel }}
+    </div>
+
+    {% if total_vagas_disponivel == 0 %}
+        <div class="alert alert-danger text-center" style="font-size: 1.5rem;">
+            Esgotado
+        </div>
+    {% endif %}
+
+    <form method="post" class="row g-3">
+        {% csrf_token %}
+        {% if form.errors %}
+            <div class="alert alert-danger">
+                <ul class="mb-0">
+                    {% for field in form %}
+                        {% for error in field.errors %}
+                            <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                    {% for error in form.non_field_errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+        <div class="col-md-6">
+            <label for="nome_completo" class="form-label">Nome do Convidado</label>
+            <input type="text" id="nome_completo" name="nome_completo"
+                   class="form-control{% if form.nome_completo.errors %} is-invalid{% endif %}"
+                   autocomplete="off" required value="{{ form.nome_completo.value|default_if_none:'' }}"
+                   {% if total_vagas_disponivel == 0 %}disabled{% endif %}>
+            {% for error in form.nome_completo.errors %}
+                <div class="invalid-feedback d-block">{{ error }}</div>
+            {% endfor %}
+        </div>
+        <div class="col-md-3">
+            <label for="idade" class="form-label">Idade</label>
+            <input type="number" id="idade" name="idade"
+                   class="form-control{% if form.idade.errors %} is-invalid{% endif %}"
+                   value="{{ form.idade.value|default_if_none:'' }}"
+                   {% if total_vagas_disponivel == 0 %}disabled{% endif %}>
+            {% for error in form.idade.errors %}
+                <div class="invalid-feedback d-block">{{ error }}</div>
+            {% endfor %}
+        </div>
+        <div class="col-md-6">
+            <label for="formacao" class="form-label">Formação</label>
+            <input type="text" id="formacao" name="formacao"
+                   class="form-control{% if form.formacao.errors %} is-invalid{% endif %}"
+                   value="{{ form.formacao.value|default_if_none:'' }}"
+                   {% if total_vagas_disponivel == 0 %}disabled{% endif %}>
+            {% for error in form.formacao.errors %}
+                <div class="invalid-feedback d-block">{{ error }}</div>
+            {% endfor %}
+        </div>
+        <div class="col-md-6">
+            <label for="ocupacao" class="form-label">Ocupação</label>
+            <input type="text" id="ocupacao" name="ocupacao"
+                   class="form-control{% if form.ocupacao.errors %} is-invalid{% endif %}"
+                   value="{{ form.ocupacao.value|default_if_none:'' }}"
+                   {% if total_vagas_disponivel == 0 %}disabled{% endif %}>
+            {% for error in form.ocupacao.errors %}
+                <div class="invalid-feedback d-block">{{ error }}</div>
+            {% endfor %}
+        </div>
+        <div class="col-md-6">
+            <label for="recebeu_convite_de" class="form-label">Recebeu o convite de quem</label>
+            <input type="text" id="recebeu_convite_de" name="recebeu_convite_de"
+                   class="form-control{% if form.recebeu_convite_de.errors %} is-invalid{% endif %}"
+                   value="{{ form.recebeu_convite_de.value|default_if_none:'' }}"
+                   {% if total_vagas_disponivel == 0 %}disabled{% endif %}>
+            {% for error in form.recebeu_convite_de.errors %}
+                <div class="invalid-feedback d-block">{{ error }}</div>
+            {% endfor %}
+        </div>
+        <div class="col-md-6">
+            <label for="senha_especial" class="form-label">Senha especial</label>
+            <input type="text" id="senha_especial" name="senha_especial"
+                   class="form-control{% if form.senha_especial.errors %} is-invalid{% endif %}"
+                   value="{{ form.senha_especial.value|default_if_none:'' }}"
+                   {% if total_vagas_disponivel == 0 %}disabled{% endif %}>
+            {% for error in form.senha_especial.errors %}
+                <div class="invalid-feedback d-block">{{ error }}</div>
+            {% endfor %}
+        </div>
+        <div class="col-md-6">
+            <label for="email" class="form-label">E-mail</label>
+            <input type="email" id="email" name="email"
+                   class="form-control{% if form.email.errors %} is-invalid{% endif %}"
+                   value="{{ form.email.value|default_if_none:'' }}"
+                   {% if total_vagas_disponivel == 0 %}disabled{% endif %}>
+            {% for error in form.email.errors %}
+                <div class="invalid-feedback d-block">{{ error }}</div>
+            {% endfor %}
+        </div>
+        <div class="col-12">
+            <button type="submit" class="btn btn-primary"
+                {% if total_vagas_disponivel == 0 %}disabled{% endif %}>
+                Enviar inscrição
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var input = document.getElementById("nome_completo");
+    var awesomplete = new Awesomplete(input, { minChars: 1, maxItems: 10 });
+
+    input.addEventListener("input", function() {
+        var query = input.value;
+        if (query.length > 0) {
+            fetch("/eventos/autocomplete/convidados/?q=" + encodeURIComponent(query))
+                .then(response => response.json())
+                .then(data => {
+                    awesomplete.list = data;
+                });
+        }
+    });
+
+    input.addEventListener("awesomplete-selectcomplete", function(evt) {
+        var valor = input.value;
+        var nome = valor.split(' (')[0];
+        input.value = nome;
+
+        // Buscar dados completos do convidado
+        fetch('/eventos/dados_convidado/?nome_convidado=' + encodeURIComponent(nome))
+            .then(response => {
+                if (!response.ok) throw new Error('Convidado não encontrado');
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById('idade').value = data.idade || '';
+                document.getElementById('formacao').value = data.formacao || '';
+                document.getElementById('ocupacao').value = data.ocupacao || '';
+                document.getElementById('recebeu_convite_de').value = data.recebeu_convite_de || '';
+                document.getElementById('senha_especial').value = data.senha_especial || '';
+                document.getElementById('email').value = data.email || '';
+            })
+            .catch(() => {
+                document.getElementById('idade').value = '';
+                document.getElementById('formacao').value = '';
+                document.getElementById('ocupacao').value = '';
+                document.getElementById('recebeu_convite_de').value = '';
+                document.getElementById('senha_especial').value = '';
+                document.getElementById('email').value = '';
+            });
+    });
+});
+</script> 

@@ -16,6 +16,10 @@ def logout_view(request):
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('eventos/', include('eventos.urls')),
     path('', include('loja.urls')),
     path('logout/', logout_view, name='logout'),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -1,0 +1,122 @@
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<!-- CSS do Awesomplete -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/awesomplete/1.1.5/awesomplete.min.css" />
+<!-- JS do Awesomplete -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/awesomplete/1.1.5/awesomplete.min.js"></script>
+
+<div class="container mt-5">
+    <h2 class="mb-4">Inscrição do Curso</h2>
+    <div class="alert alert-info">
+        Vagas disponíveis: {{ vagas_disponiveis }}
+    </div>
+    {% if esgotado %}
+        <div class="text-center my-5">
+            <span class="fw-bold fs-2 text-danger">Esgotado</span>
+        </div>
+    {% else %}
+        <form method="post" class="row g-3">
+            {% csrf_token %}
+            {% if form.errors %}
+                <div class="alert alert-danger">
+                    <ul class="mb-0">
+                        {% for field in form %}
+                            {% for error in field.errors %}
+                                <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                        {% for error in form.non_field_errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+            <div class="col-md-6">
+                <label for="nome_curso" class="form-label">Nome do Curso</label>
+                <input type="text" id="nome_curso" name="nome_curso" class="form-control{% if form.nome_curso.errors %} is-invalid{% endif %}" autocomplete="off" required value="{{ form.nome_curso.value|default_if_none:'' }}">
+                {% for error in form.nome_curso.errors %}
+                    <div class="invalid-feedback d-block">{{ error }}</div>
+                {% endfor %}
+            </div>
+            <div class="col-md-6">
+                <label for="nome_completo" class="form-label">Nome Completo</label>
+                <input type="text" id="nome_completo" name="nome_completo" class="form-control{% if form.nome_completo.errors %} is-invalid{% endif %}" value="{{ form.nome_completo.value|default_if_none:'' }}">
+                {% for error in form.nome_completo.errors %}
+                    <div class="invalid-feedback d-block">{{ error }}</div>
+                {% endfor %}
+            </div>
+            <div class="col-md-3">
+                <label for="idade" class="form-label">Idade</label>
+                <input type="number" id="idade" name="idade" class="form-control{% if form.idade.errors %} is-invalid{% endif %}" value="{{ form.idade.value|default_if_none:'' }}">
+                {% for error in form.idade.errors %}
+                    <div class="invalid-feedback d-block">{{ error }}</div>
+                {% endfor %}
+            </div>
+            <div class="col-md-3">
+                <label for="matricula" class="form-label">Matrícula</label>
+                <input type="text" id="matricula" name="matricula" class="form-control{% if form.matricula.errors %} is-invalid{% endif %}" value="{{ form.matricula.value|default_if_none:'' }}">
+                {% for error in form.matricula.errors %}
+                    <div class="invalid-feedback d-block">{{ error }}</div>
+                {% endfor %}
+            </div>
+            <div class="col-md-6">
+                <label for="email" class="form-label">E-mail</label>
+                <input type="email" id="email" name="email" class="form-control{% if form.email.errors %} is-invalid{% endif %}" value="{{ form.email.value|default_if_none:'' }}">
+                {% for error in form.email.errors %}
+                    <div class="invalid-feedback d-block">{{ error }}</div>
+                {% endfor %}
+            </div>
+            <div class="col-md-6">
+                <label for="ocupacao" class="form-label">Ocupação</label>
+                <input type="text" id="ocupacao" name="ocupacao" class="form-control{% if form.ocupacao.errors %} is-invalid{% endif %}" value="{{ form.ocupacao.value|default_if_none:'' }}">
+                {% for error in form.ocupacao.errors %}
+                    <div class="invalid-feedback d-block">{{ error }}</div>
+                {% endfor %}
+            </div>
+            <div class="col-md-6">
+                <label for="coordenador" class="form-label">Coordenador</label>
+                <input type="text" id="coordenador" name="coordenador" class="form-control{% if form.coordenador.errors %} is-invalid{% endif %}" value="{{ form.coordenador.value|default_if_none:'' }}" autocomplete="off">
+                {% for error in form.coordenador.errors %}
+                    <div class="invalid-feedback d-block">{{ error }}</div>
+                {% endfor %}
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">Enviar inscrição</button>
+            </div>
+        </form>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var input = document.getElementById("nome_curso");
+    var awesomplete = new Awesomplete(input, { minChars: 1, maxItems: 10 });
+
+    input.addEventListener("input", function() {
+        var query = input.value;
+        if (query.length > 0) {
+            fetch("/eventos/autocomplete/cursos/?q=" + encodeURIComponent(query) + "&autocomplete=1")
+                .then(response => response.json())
+                .then(data => {
+                    awesomplete.list = data;
+                });
+        }
+    });
+
+    // Autocomplete para o campo Coordenador
+    var inputCoordenador = document.getElementById("coordenador");
+    if (inputCoordenador) {
+        var awesompleteCoordenador = new Awesomplete(inputCoordenador, { minChars: 1, maxItems: 10 });
+
+        inputCoordenador.addEventListener("input", function() {
+            var query = inputCoordenador.value;
+            if (query.length > 0) {
+                fetch("/eventos/autocomplete/coordenadores/?q=" + encodeURIComponent(query))
+                    .then(response => response.json())
+                    .then(data => {
+                        awesompleteCoordenador.list = data;
+                    });
+            }
+        });
+    }
+});
+</script> 
