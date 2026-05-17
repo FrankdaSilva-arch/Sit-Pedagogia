@@ -1,0 +1,305 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<div style="display:flex; gap:20px; padding:20px;">
+
+    <!-- Painel de controle -->
+    <div style="width:340px; min-width:340px; background:#f8f8f8; border:1px solid #ddd; border-radius:8px; padding:20px; height:fit-content; position:sticky; top:20px;">
+        <h2 style="color:#417690; margin-top:0;">🎨 Editor de Certificado</h2>
+        <p style="color:#666; font-size:13px;">Arraste as caixas sobre o certificado para posicionar. Redimensione pelas bordas.</p>
+
+        <!-- Nome -->
+        <div id="painel-nome" class="painel-campo" style="border:2px solid #c0392b; border-radius:6px; padding:12px; margin-bottom:12px; background:#fff;">
+            <h4 style="margin:0 0 8px; color:#c0392b;">📝 Nome</h4>
+            <label style="font-size:12px;">Fonte</label>
+            <select id="nome_fonte" onchange="atualizarCaixas()" style="width:100%; margin-bottom:6px; padding:4px;">
+                <option value="Arial" {% if cert.nome_fonte == 'Arial' %}selected{% endif %}>Arial</option>
+                <option value="Arial Bold" {% if cert.nome_fonte == 'Arial Bold' %}selected{% endif %}>Arial Bold</option>
+                <option value="Arial Italico" {% if cert.nome_fonte == 'Arial Italico' %}selected{% endif %}>Arial Itálico</option>
+                <option value="Arial Bold Italico" {% if cert.nome_fonte == 'Arial Bold Italico' %}selected{% endif %}>Arial Bold Itálico</option>
+                <option value="Times New Roman" {% if cert.nome_fonte == 'Times New Roman' %}selected{% endif %}>Times New Roman</option>
+                <option value="Times New Roman Bold" {% if cert.nome_fonte == 'Times New Roman Bold' %}selected{% endif %}>Times New Roman Bold</option>
+                <option value="DejaVu Sans" {% if cert.nome_fonte == 'DejaVu Sans' %}selected{% endif %}>DejaVu Sans</option>
+                <option value="DejaVu Sans Bold" {% if cert.nome_fonte == 'DejaVu Sans Bold' %}selected{% endif %}>DejaVu Sans Bold</option>
+                <option value="DejaVu Serif" {% if cert.nome_fonte == 'DejaVu Serif' %}selected{% endif %}>DejaVu Serif</option>
+                <option value="DejaVu Serif Bold" {% if cert.nome_fonte == 'DejaVu Serif Bold' %}selected{% endif %}>DejaVu Serif Bold</option>
+            </select>
+            <label style="font-size:12px;">Tamanho (10-100px)</label>
+            <input type="number" id="nome_tamanho" min="10" max="100" value="{{ cert.nome_tamanho }}" onchange="atualizarCaixas()" style="width:100%; margin-bottom:6px; padding:4px;">
+            <label style="font-size:12px;">Cor</label>
+            <input type="color" id="nome_cor" value="{{ cert.nome_cor }}" onchange="atualizarCaixas()" style="width:100%; height:35px; margin-bottom:6px;">
+            <label style="font-size:12px;">Alinhamento</label>
+            <div style="display:flex; gap:4px; margin-top:4px;">
+                <button onclick="setAlinhamento('nome','left')" id="nome_aln_left" title="Esquerda" style="flex:1; padding:6px; border:1px solid #ccc; border-radius:4px; cursor:pointer; background:{% if cert.nome_alinhamento == 'left' or not cert.nome_alinhamento %}#417690{% else %}#fff{% endif %}; color:{% if cert.nome_alinhamento == 'left' or not cert.nome_alinhamento %}white{% else %}#333{% endif %};">⬅</button>
+                <button onclick="setAlinhamento('nome','center')" id="nome_aln_center" title="Centralizar" style="flex:1; padding:6px; border:1px solid #ccc; border-radius:4px; cursor:pointer; background:{% if cert.nome_alinhamento == 'center' %}#417690{% else %}#fff{% endif %}; color:{% if cert.nome_alinhamento == 'center' %}white{% else %}#333{% endif %};">↔</button>
+                <button onclick="setAlinhamento('nome','right')" id="nome_aln_right" title="Direita" style="flex:1; padding:6px; border:1px solid #ccc; border-radius:4px; cursor:pointer; background:{% if cert.nome_alinhamento == 'right' %}#417690{% else %}#fff{% endif %}; color:{% if cert.nome_alinhamento == 'right' %}white{% else %}#333{% endif %};">➡</button>
+                <button onclick="setAlinhamento('nome','justify')" id="nome_aln_justify" title="Justificar" style="flex:1; padding:6px; border:1px solid #ccc; border-radius:4px; cursor:pointer; background:{% if cert.nome_alinhamento == 'justify' %}#417690{% else %}#fff{% endif %}; color:{% if cert.nome_alinhamento == 'justify' %}white{% else %}#333{% endif %};">▤</button>
+            </div>
+        </div>
+
+        <!-- Matrícula -->
+        <div id="painel-matricula" class="painel-campo" style="border:2px solid #2980b9; border-radius:6px; padding:12px; margin-bottom:12px; background:#fff;">
+            <h4 style="margin:0 0 8px; color:#2980b9;">🔢 Matrícula</h4>
+            <label style="font-size:12px;">Fonte</label>
+            <select id="matricula_fonte" onchange="atualizarCaixas()" style="width:100%; margin-bottom:6px; padding:4px;">
+                <option value="Arial" {% if cert.matricula_fonte == 'Arial' %}selected{% endif %}>Arial</option>
+                <option value="Arial Bold" {% if cert.matricula_fonte == 'Arial Bold' %}selected{% endif %}>Arial Bold</option>
+                <option value="Arial Italico" {% if cert.matricula_fonte == 'Arial Italico' %}selected{% endif %}>Arial Itálico</option>
+                <option value="Arial Bold Italico" {% if cert.matricula_fonte == 'Arial Bold Italico' %}selected{% endif %}>Arial Bold Itálico</option>
+                <option value="Times New Roman" {% if cert.matricula_fonte == 'Times New Roman' %}selected{% endif %}>Times New Roman</option>
+                <option value="Times New Roman Bold" {% if cert.matricula_fonte == 'Times New Roman Bold' %}selected{% endif %}>Times New Roman Bold</option>
+                <option value="DejaVu Sans" {% if cert.matricula_fonte == 'DejaVu Sans' %}selected{% endif %}>DejaVu Sans</option>
+                <option value="DejaVu Sans Bold" {% if cert.matricula_fonte == 'DejaVu Sans Bold' %}selected{% endif %}>DejaVu Sans Bold</option>
+                <option value="DejaVu Serif" {% if cert.matricula_fonte == 'DejaVu Serif' %}selected{% endif %}>DejaVu Serif</option>
+                <option value="DejaVu Serif Bold" {% if cert.matricula_fonte == 'DejaVu Serif Bold' %}selected{% endif %}>DejaVu Serif Bold</option>
+            </select>
+            <label style="font-size:12px;">Tamanho (10-100px)</label>
+            <input type="number" id="matricula_tamanho" min="10" max="100" value="{{ cert.matricula_tamanho }}" onchange="atualizarCaixas()" style="width:100%; margin-bottom:6px; padding:4px;">
+            <label style="font-size:12px;">Cor</label>
+            <input type="color" id="matricula_cor" value="{{ cert.matricula_cor }}" onchange="atualizarCaixas()" style="width:100%; height:35px; margin-bottom:6px;">
+            <label style="font-size:12px;">Alinhamento</label>
+            <div style="display:flex; gap:4px; margin-top:4px;">
+                <button onclick="setAlinhamento('matricula','left')" id="matricula_aln_left" title="Esquerda" style="flex:1; padding:6px; border:1px solid #ccc; border-radius:4px; cursor:pointer; background:{% if cert.matricula_alinhamento == 'left' or not cert.matricula_alinhamento %}#417690{% else %}#fff{% endif %}; color:{% if cert.matricula_alinhamento == 'left' or not cert.matricula_alinhamento %}white{% else %}#333{% endif %};">⬅</button>
+                <button onclick="setAlinhamento('matricula','center')" id="matricula_aln_center" title="Centralizar" style="flex:1; padding:6px; border:1px solid #ccc; border-radius:4px; cursor:pointer; background:{% if cert.matricula_alinhamento == 'center' %}#417690{% else %}#fff{% endif %}; color:{% if cert.matricula_alinhamento == 'center' %}white{% else %}#333{% endif %};">↔</button>
+                <button onclick="setAlinhamento('matricula','right')" id="matricula_aln_right" title="Direita" style="flex:1; padding:6px; border:1px solid #ccc; border-radius:4px; cursor:pointer; background:{% if cert.matricula_alinhamento == 'right' %}#417690{% else %}#fff{% endif %}; color:{% if cert.matricula_alinhamento == 'right' %}white{% else %}#333{% endif %};">➡</button>
+                <button onclick="setAlinhamento('matricula','justify')" id="matricula_aln_justify" title="Justificar" style="flex:1; padding:6px; border:1px solid #ccc; border-radius:4px; cursor:pointer; background:{% if cert.matricula_alinhamento == 'justify' %}#417690{% else %}#fff{% endif %}; color:{% if cert.matricula_alinhamento == 'justify' %}white{% else %}#333{% endif %};">▤</button>
+            </div>
+        </div>
+
+        <!-- Conclusão -->
+        <div id="painel-conclusao" class="painel-campo" style="border:2px solid #27ae60; border-radius:6px; padding:12px; margin-bottom:12px; background:#fff;">
+            <h4 style="margin:0 0 8px; color:#27ae60;">✅ Conclusão</h4>
+            <label style="font-size:12px;">Texto (Enter para quebrar linha)</label>
+            <textarea id="conclusao_texto" oninput="atualizarCaixas()" style="width:100%; margin-bottom:6px; padding:4px; height:80px;">{{ cert.conclusao_texto }}</textarea>
+            <label style="font-size:12px;">Fonte</label>
+            <select id="conclusao_fonte" onchange="atualizarCaixas()" style="width:100%; margin-bottom:6px; padding:4px;">
+                <option value="Arial" {% if cert.conclusao_fonte == 'Arial' %}selected{% endif %}>Arial</option>
+                <option value="Arial Bold" {% if cert.conclusao_fonte == 'Arial Bold' %}selected{% endif %}>Arial Bold</option>
+                <option value="Arial Italico" {% if cert.conclusao_fonte == 'Arial Italico' %}selected{% endif %}>Arial Itálico</option>
+                <option value="Arial Bold Italico" {% if cert.conclusao_fonte == 'Arial Bold Italico' %}selected{% endif %}>Arial Bold Itálico</option>
+                <option value="Times New Roman" {% if cert.conclusao_fonte == 'Times New Roman' %}selected{% endif %}>Times New Roman</option>
+                <option value="Times New Roman Bold" {% if cert.conclusao_fonte == 'Times New Roman Bold' %}selected{% endif %}>Times New Roman Bold</option>
+                <option value="DejaVu Sans" {% if cert.conclusao_fonte == 'DejaVu Sans' %}selected{% endif %}>DejaVu Sans</option>
+                <option value="DejaVu Sans Bold" {% if cert.conclusao_fonte == 'DejaVu Sans Bold' %}selected{% endif %}>DejaVu Sans Bold</option>
+                <option value="DejaVu Serif" {% if cert.conclusao_fonte == 'DejaVu Serif' %}selected{% endif %}>DejaVu Serif</option>
+                <option value="DejaVu Serif Bold" {% if cert.conclusao_fonte == 'DejaVu Serif Bold' %}selected{% endif %}>DejaVu Serif Bold</option>
+            </select>
+            <label style="font-size:12px;">Tamanho (10-100px)</label>
+            <input type="number" id="conclusao_tamanho" min="10" max="100" value="{{ cert.conclusao_tamanho }}" onchange="atualizarCaixas()" style="width:100%; margin-bottom:6px; padding:4px;">
+            <label style="font-size:12px;">Cor</label>
+            <input type="color" id="conclusao_cor" value="{{ cert.conclusao_cor }}" onchange="atualizarCaixas()" style="width:100%; height:35px; margin-bottom:6px;">
+            <label style="font-size:12px;">Alinhamento</label>
+            <div style="display:flex; gap:4px; margin-top:4px;">
+                <button onclick="setAlinhamento('conclusao','left')" id="conclusao_aln_left" title="Esquerda" style="flex:1; padding:6px; border:1px solid #ccc; border-radius:4px; cursor:pointer; background:{% if cert.conclusao_alinhamento == 'left' or not cert.conclusao_alinhamento %}#417690{% else %}#fff{% endif %}; color:{% if cert.conclusao_alinhamento == 'left' or not cert.conclusao_alinhamento %}white{% else %}#333{% endif %};">⬅</button>
+                <button onclick="setAlinhamento('conclusao','center')" id="conclusao_aln_center" title="Centralizar" style="flex:1; padding:6px; border:1px solid #ccc; border-radius:4px; cursor:pointer; background:{% if cert.conclusao_alinhamento == 'center' %}#417690{% else %}#fff{% endif %}; color:{% if cert.conclusao_alinhamento == 'center' %}white{% else %}#333{% endif %};">↔</button>
+                <button onclick="setAlinhamento('conclusao','right')" id="conclusao_aln_right" title="Direita" style="flex:1; padding:6px; border:1px solid #ccc; border-radius:4px; cursor:pointer; background:{% if cert.conclusao_alinhamento == 'right' %}#417690{% else %}#fff{% endif %}; color:{% if cert.conclusao_alinhamento == 'right' %}white{% else %}#333{% endif %};">➡</button>
+                <button onclick="setAlinhamento('conclusao','justify')" id="conclusao_aln_justify" title="Justificar" style="flex:1; padding:6px; border:1px solid #ccc; border-radius:4px; cursor:pointer; background:{% if cert.conclusao_alinhamento == 'justify' %}#417690{% else %}#fff{% endif %}; color:{% if cert.conclusao_alinhamento == 'justify' %}white{% else %}#333{% endif %};">▤</button>
+            </div>
+        </div>
+
+        <button onclick="salvarPosicoes()" style="width:100%; padding:12px; background:#417690; color:white; border:none; border-radius:6px; font-size:15px; cursor:pointer;">
+            💾 Salvar Posições
+        </button>
+        <div id="msg-salvo" style="display:none; color:green; text-align:center; margin-top:8px; font-weight:bold;">✅ Salvo com sucesso!</div>
+        <a href="{% url 'admin:eventos_certificacao_change' cert.id %}" style="display:block; text-align:center; margin-top:10px; color:#417690;">← Voltar</a>
+    </div>
+
+    <!-- Área do certificado -->
+    <div style="flex:1; overflow:auto;">
+        <p style="color:#666; font-size:13px; margin-bottom:8px;">💡 Arraste para mover. Arraste a borda direita/inferior para redimensionar a caixa.</p>
+        <div id="cert-container" style="position:relative; display:inline-block; border:2px solid #ddd;">
+            <img id="cert-img" src="{{ cert.imagem_fundo.url }}" style="display:block; max-width:900px;">
+
+            <!-- Caixa Nome -->
+            <div id="box-nome" class="cert-box" data-campo="nome"
+                 style="position:absolute; left:{{ cert.nome_x }}px; top:{{ cert.nome_y }}px; width:{{ cert.nome_largura }}px; cursor:move; user-select:none; padding:4px; box-sizing:border-box; resize:both; overflow:hidden;">
+                <div id="txt-nome"
+                     style="font-family:'{{ cert.nome_fonte }}'; font-size:{{ cert.nome_tamanho }}px; color:{{ cert.nome_cor }}; text-align:{{ cert.nome_alinhamento|default:'left' }}; white-space:normal; word-wrap:break-word; text-shadow:1px 1px 2px rgba(255,255,255,0.5);">
+                    Nome do Inscrito
+                </div>
+                <div style="border:2px dashed #c0392b; position:absolute; top:0; left:0; right:0; bottom:0; pointer-events:none;"></div>
+            </div>
+
+            <!-- Caixa Matrícula -->
+            <div id="box-matricula" class="cert-box" data-campo="matricula"
+                 style="position:absolute; left:{{ cert.matricula_x }}px; top:{{ cert.matricula_y }}px; width:{{ cert.matricula_largura }}px; cursor:move; user-select:none; padding:4px; box-sizing:border-box; resize:both; overflow:hidden;">
+                <div id="txt-matricula"
+                     style="font-family:'{{ cert.matricula_fonte }}'; font-size:{{ cert.matricula_tamanho }}px; color:{{ cert.matricula_cor }}; text-align:{{ cert.matricula_alinhamento|default:'left' }}; white-space:normal; word-wrap:break-word; text-shadow:1px 1px 2px rgba(255,255,255,0.5);">
+                    Matrícula: 12345
+                </div>
+                <div style="border:2px dashed #2980b9; position:absolute; top:0; left:0; right:0; bottom:0; pointer-events:none;"></div>
+            </div>
+
+            <!-- Caixa Conclusão -->
+            <div id="box-conclusao" class="cert-box" data-campo="conclusao"
+                 style="position:absolute; left:{{ cert.conclusao_x }}px; top:{{ cert.conclusao_y }}px; width:{{ cert.conclusao_largura }}px; cursor:move; user-select:none; padding:4px; box-sizing:border-box; resize:both; overflow:hidden;">
+                <div id="txt-conclusao"
+                     style="font-family:'{{ cert.conclusao_fonte }}'; font-size:{{ cert.conclusao_tamanho }}px; color:{{ cert.conclusao_cor }}; text-align:{{ cert.conclusao_alinhamento|default:'left' }}; white-space:pre-wrap; word-wrap:break-word; text-shadow:1px 1px 2px rgba(255,255,255,0.5);">{{ cert.conclusao_texto }}</div>
+                <div style="border:2px dashed #27ae60; position:absolute; top:0; left:0; right:0; bottom:0; pointer-events:none;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+var fonteCss = {
+    'Arial': 'Arial, sans-serif',
+    'Arial Bold': 'Arial, sans-serif',
+    'Arial Italico': 'Arial, sans-serif',
+    'Arial Bold Italico': 'Arial, sans-serif',
+    'Times New Roman': '"Times New Roman", serif',
+    'Times New Roman Bold': '"Times New Roman", serif',
+    'DejaVu Sans': 'DejaVu Sans, Arial, sans-serif',
+    'DejaVu Sans Bold': 'DejaVu Sans, Arial, sans-serif',
+    'DejaVu Serif': 'DejaVu Serif, Georgia, serif',
+    'DejaVu Serif Bold': 'DejaVu Serif, Georgia, serif',
+};
+var fontePeso = {
+    'Arial Bold': 'bold', 'Arial Bold Italico': 'bold',
+    'Times New Roman Bold': 'bold',
+    'DejaVu Sans Bold': 'bold', 'DejaVu Serif Bold': 'bold',
+};
+var fonteEstilo = {
+    'Arial Italico': 'italic', 'Arial Bold Italico': 'italic',
+};
+
+var posicoes = {
+    nome_x: {{ cert.nome_x }}, nome_y: {{ cert.nome_y }},
+    matricula_x: {{ cert.matricula_x }}, matricula_y: {{ cert.matricula_y }},
+    conclusao_x: {{ cert.conclusao_x }}, conclusao_y: {{ cert.conclusao_y }},
+};
+var larguras = {
+    nome: {{ cert.nome_largura }},
+    matricula: {{ cert.matricula_largura }},
+    conclusao: {{ cert.conclusao_largura }},
+};
+var alinhamentos = {
+    nome: '{{ cert.nome_alinhamento|default:"left" }}',
+    matricula: '{{ cert.matricula_alinhamento|default:"left" }}',
+    conclusao: '{{ cert.conclusao_alinhamento|default:"left" }}',
+};
+
+function setAlinhamento(campo, valor) {
+    alinhamentos[campo] = valor;
+    ['left','center','right','justify'].forEach(function(v) {
+        var btn = document.getElementById(campo + '_aln_' + v);
+        if (btn) {
+            btn.style.background = (v === valor) ? '#417690' : '#fff';
+            btn.style.color = (v === valor) ? 'white' : '#333';
+        }
+    });
+    atualizarCaixas();
+}
+
+function aplicarFonte(el, nome) {
+    el.style.fontFamily = fonteCss[nome] || nome;
+    el.style.fontWeight = fontePeso[nome] || 'normal';
+    el.style.fontStyle  = fonteEstilo[nome] || 'normal';
+}
+
+function atualizarCaixas() {
+    var txtNome = document.getElementById('txt-nome');
+    aplicarFonte(txtNome, document.getElementById('nome_fonte').value);
+    txtNome.style.fontSize  = document.getElementById('nome_tamanho').value + 'px';
+    txtNome.style.color     = document.getElementById('nome_cor').value;
+    txtNome.style.textAlign = alinhamentos.nome;
+
+    var txtMat = document.getElementById('txt-matricula');
+    aplicarFonte(txtMat, document.getElementById('matricula_fonte').value);
+    txtMat.style.fontSize  = document.getElementById('matricula_tamanho').value + 'px';
+    txtMat.style.color     = document.getElementById('matricula_cor').value;
+    txtMat.style.textAlign = alinhamentos.matricula;
+
+    var txtConc = document.getElementById('txt-conclusao');
+    aplicarFonte(txtConc, document.getElementById('conclusao_fonte').value);
+    txtConc.style.fontSize  = document.getElementById('conclusao_tamanho').value + 'px';
+    txtConc.style.color     = document.getElementById('conclusao_cor').value;
+    txtConc.style.textAlign = alinhamentos.conclusao;
+    txtConc.textContent     = document.getElementById('conclusao_texto').value;
+}
+
+// Arrastar caixas
+function tornarArrastavel(boxId, xKey, yKey, largKey) {
+    var box = document.getElementById(boxId);
+    var container = document.getElementById('cert-container');
+    var isDragging = false;
+    var startX, startY, startLeft, startTop;
+
+    box.addEventListener('mousedown', function(e) {
+        if (e.target === box || e.target.tagName === 'DIV') {
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            startLeft = parseInt(box.style.left) || 0;
+            startTop  = parseInt(box.style.top)  || 0;
+            e.preventDefault();
+        }
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!isDragging) return;
+        var dx = e.clientX - startX;
+        var dy = e.clientY - startY;
+        if (Math.abs(dx) < 3 && Math.abs(dy) < 3) return;
+        var maxLeft = container.offsetWidth  - box.offsetWidth;
+        var maxTop  = container.offsetHeight - box.offsetHeight;
+        var newLeft = Math.max(0, Math.min(startLeft + dx, maxLeft));
+        var newTop  = Math.max(0, Math.min(startTop  + dy, maxTop));
+        box.style.left = newLeft + 'px';
+        box.style.top  = newTop  + 'px';
+        posicoes[xKey] = newLeft;
+        posicoes[yKey] = newTop;
+    });
+
+    document.addEventListener('mouseup', function() { isDragging = false; });
+
+    // Observar redimensionamento
+    var ro = new ResizeObserver(function() {
+        larguras[largKey] = box.offsetWidth;
+    });
+    ro.observe(box);
+}
+
+tornarArrastavel('box-nome',      'nome_x',      'nome_y',      'nome');
+tornarArrastavel('box-matricula', 'matricula_x', 'matricula_y', 'matricula');
+tornarArrastavel('box-conclusao', 'conclusao_x', 'conclusao_y', 'conclusao');
+
+function salvarPosicoes() {
+    var dados = {
+        nome_x: posicoes.nome_x, nome_y: posicoes.nome_y,
+        nome_largura: larguras.nome,
+        nome_fonte: document.getElementById('nome_fonte').value,
+        nome_tamanho: parseInt(document.getElementById('nome_tamanho').value),
+        nome_cor: document.getElementById('nome_cor').value,
+        nome_alinhamento: alinhamentos.nome,
+        matricula_x: posicoes.matricula_x, matricula_y: posicoes.matricula_y,
+        matricula_largura: larguras.matricula,
+        matricula_fonte: document.getElementById('matricula_fonte').value,
+        matricula_tamanho: parseInt(document.getElementById('matricula_tamanho').value),
+        matricula_cor: document.getElementById('matricula_cor').value,
+        matricula_alinhamento: alinhamentos.matricula,
+        conclusao_x: posicoes.conclusao_x, conclusao_y: posicoes.conclusao_y,
+        conclusao_largura: larguras.conclusao,
+        conclusao_fonte: document.getElementById('conclusao_fonte').value,
+        conclusao_tamanho: parseInt(document.getElementById('conclusao_tamanho').value),
+        conclusao_cor: document.getElementById('conclusao_cor').value,
+        conclusao_alinhamento: alinhamentos.conclusao,
+        conclusao_texto: document.getElementById('conclusao_texto').value,
+    };
+
+    fetch("{% url 'admin:salvar_posicoes_certificado' cert.id %}", {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
+        body: JSON.stringify(dados)
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'ok') {
+            var msg = document.getElementById('msg-salvo');
+            msg.style.display = 'block';
+            setTimeout(() => msg.style.display = 'none', 3000);
+        }
+    });
+}
+</script>
+{% endblock %}

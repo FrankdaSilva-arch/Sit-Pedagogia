@@ -81,7 +81,7 @@ class Curso(models.Model):
     nome_completo = models.CharField("Nome completo", max_length=200)
     idade = models.PositiveIntegerField("Idade")
     matricula = models.CharField("Matrícula", max_length=20)
-    email = models.EmailField("E-mail")
+    email = models.EmailField("Contato")
     ocupacao = models.CharField("Ocupação", max_length=100)
     coordenador = models.CharField("Coordenador(a)", max_length=200)
 
@@ -101,7 +101,7 @@ class ConvidadoEspecial(models.Model):
     recebeu_convite_de = models.CharField(
         "Recebeu o convite de quem", max_length=200)
     senha_especial = models.CharField("Senha especial", max_length=100)
-    email = models.EmailField("E-mail", max_length=254, blank=True, null=True)
+    email = models.EmailField("Contato", max_length=254, blank=True, null=True)
 
     class Meta:
         verbose_name = "Convidado(a) Especial"
@@ -115,7 +115,7 @@ class PublicoGeral(models.Model):
     nome_completo = models.CharField("Nome completo", max_length=200)
     idade = models.PositiveIntegerField("Idade")
     ocupacao = models.CharField("Ocupação", max_length=100)
-    email = models.EmailField("E-mail", max_length=254, blank=True, null=True)
+    email = models.EmailField("Contato", max_length=254, blank=True, null=True)
 
     class Meta:
         verbose_name = "Público Geral"
@@ -176,3 +176,58 @@ class LimitePublicoGeralID(models.Model):
 
     def __str__(self):
         return f"Limite público geral ID: {self.valor}"
+
+
+class Certificacao(models.Model):
+    ALINHAMENTO_CHOICES = [
+        ('left', 'Esquerda'),
+        ('center', 'Centralizado'),
+        ('right', 'Direita'),
+        ('justify', 'Justificado'),
+    ]
+    conclusao_largura = models.IntegerField(default=500)
+    nome_largura = models.IntegerField(default=300)
+    matricula_largura = models.IntegerField(default=300)
+
+
+    GRUPO_CHOICES = [
+        ('cursos', 'Cursos'),
+        ('convidados', 'Convidados Especiais'),
+        ('publico', 'Público Geral'),
+    ]
+    nome = models.CharField(max_length=200)
+    imagem_fundo = models.ImageField(upload_to='certificados/')
+    grupo = models.CharField(max_length=20, choices=GRUPO_CHOICES)
+    evento = models.ForeignKey('Evento', on_delete=models.CASCADE)
+
+    # Posição e formatação do campo Nome
+    nome_x = models.IntegerField(default=400)
+    nome_y = models.IntegerField(default=300)
+    nome_fonte = models.CharField(max_length=50, default='Arial')
+    nome_tamanho = models.IntegerField(default=12)
+    nome_cor = models.CharField(max_length=7, default='#000000')
+    nome_alinhamento = models.CharField(max_length=10, choices=ALINHAMENTO_CHOICES, default='left')
+
+    # Posição e formatação do campo Matrícula
+    matricula_x = models.IntegerField(default=400)
+    matricula_y = models.IntegerField(default=350)
+    matricula_fonte = models.CharField(max_length=50, default='Arial')
+    matricula_tamanho = models.IntegerField(default=12)
+    matricula_cor = models.CharField(max_length=7, default='#000000')
+    matricula_alinhamento = models.CharField(max_length=10, choices=ALINHAMENTO_CHOICES, default='left')
+
+    # Posição e formatação do campo Conclusão
+    conclusao_x = models.IntegerField(default=400)
+    conclusao_y = models.IntegerField(default=400)
+    conclusao_fonte = models.CharField(max_length=50, default='Arial')
+    conclusao_tamanho = models.IntegerField(default=12)
+    conclusao_cor = models.CharField(max_length=7, default='#000000')
+    conclusao_alinhamento = models.CharField(max_length=10, choices=ALINHAMENTO_CHOICES, default='left')
+    conclusao_texto = models.CharField(max_length=200, default='Concluiu o evento')
+
+    class Meta:
+        verbose_name = 'Certificação'
+        verbose_name_plural = 'Certificações'
+
+    def __str__(self):
+        return f'Certificação - {self.nome} ({self.get_grupo_display()})'

@@ -46,3 +46,11 @@ Thumbs.db
 # Exceções
 !docs/
 !docs/index.html 
+# Arquivo de variáveis de ambiente
+.env
+
+# Fontes (arquivos grandes, instalar manualmente)
+static/fonts/
+
+# Migrações geradas localmente (opcional manter)
+# eventos/migrations/

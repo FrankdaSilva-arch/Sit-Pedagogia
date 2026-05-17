@@ -1,8 +1,11 @@
+# VERSAO 2
 from django import forms
 from eventos.models import CadastroDosCursos
 from .models import Curso, ConvidadoEspecial, SenhaDeControle, PublicoGeral
 
 class InscricaoCursoForm(forms.ModelForm):
+    email = forms.EmailField(label="Contato", required=True)  # adicione essa linha
+
     class Meta:
         model = Curso
         fields = ['nome_curso', 'nome_completo', 'idade', 'matricula', 'email', 'ocupacao', 'coordenador']
@@ -18,10 +21,10 @@ class InscricaoCursoForm(forms.ModelForm):
         label="Nome do Curso",
         widget=forms.TextInput(attrs={'list': 'lista_cursos'})
     )
-    # ... outros campos ... 
+    # ... outros campos ...
 
 class InscricaoConvidadoForm(forms.ModelForm):
-    email = forms.EmailField(label="E-mail", required=True)
+    email = forms.EmailField(label="Contato", required=True)
 
     class Meta:
         model = ConvidadoEspecial
@@ -36,7 +39,7 @@ class InscricaoConvidadoForm(forms.ModelForm):
             'ocupacao': 'Ocupação',
             'recebeu_convite_de': 'Recebeu o convite de quem',
             'senha_especial': 'Senha especial',
-            'email': 'E-mail',
+            'email': 'Contato',
         }
 
     def clean_senha_especial(self):
@@ -47,7 +50,7 @@ class InscricaoConvidadoForm(forms.ModelForm):
         # Verifica se já existe um convidado com essa senha (impede duplicidade)
         if ConvidadoEspecial.objects.filter(senha_especial__iexact=senha).exists():
             raise forms.ValidationError("Usuário cadastrado")
-        return senha 
+        return senha
 
     def save(self, commit=True):
         instance = super().save(commit)
@@ -60,9 +63,11 @@ class InscricaoConvidadoForm(forms.ModelForm):
                 senha_controle.save()
         except SenhaDeControle.DoesNotExist:
             pass  # Não faz nada se não encontrar (mas não deveria acontecer)
-        return instance 
+        return instance
 
 class InscricaoPublicoGeralForm(forms.ModelForm):
+    email = forms.EmailField(label="Contato", required=True)  # adicione essa linha
+
     class Meta:
         model = PublicoGeral
         fields = ['nome_completo', 'idade', 'ocupacao', 'email']
@@ -71,4 +76,4 @@ class InscricaoPublicoGeralForm(forms.ModelForm):
         nome = self.cleaned_data['nome_completo'].strip()
         if PublicoGeral.objects.filter(nome_completo__iexact=nome).exists():
             raise forms.ValidationError("Você já está inscrito com esse nome completo.")
-        return nome 
+        return nome

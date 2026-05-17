@@ -92,11 +92,15 @@
             {% endfor %}
         </div>
         <div class="col-md-6">
-            <label for="email" class="form-label">E-mail</label>
-            <input type="email" id="email" name="email"
+            <label for="email" class="form-label">Contato</label>
+            <input type="tel" id="email" name="email"
                    class="form-control{% if form.email.errors %} is-invalid{% endif %}"
+                   placeholder="(DDD) 9XXXX-XXXX" maxlength="16"
                    value="{{ form.email.value|default_if_none:'' }}"
                    {% if total_vagas_disponivel == 0 %}disabled{% endif %}>
+            <div id="email-erro" class="invalid-feedback" style="display:none;">
+                Digite o número completo com o nono dígito: (DDD) 9XXXX-XXXX
+            </div>
             {% for error in form.email.errors %}
                 <div class="invalid-feedback d-block">{{ error }}</div>
             {% endfor %}
@@ -120,9 +124,7 @@ document.addEventListener("DOMContentLoaded", function() {
         if (query.length > 0) {
             fetch("/eventos/autocomplete/convidados/?q=" + encodeURIComponent(query))
                 .then(response => response.json())
-                .then(data => {
-                    awesomplete.list = data;
-                });
+                .then(data => { awesomplete.list = data; });
         }
     });
 
@@ -130,8 +132,6 @@ document.addEventListener("DOMContentLoaded", function() {
         var valor = input.value;
         var nome = valor.split(' (')[0];
         input.value = nome;
-
-        // Buscar dados completos do convidado
         fetch('/eventos/dados_convidado/?nome_convidado=' + encodeURIComponent(nome))
             .then(response => {
                 if (!response.ok) throw new Error('Convidado não encontrado');
@@ -154,5 +154,26 @@ document.addEventListener("DOMContentLoaded", function() {
                 document.getElementById('email').value = '';
             });
     });
+
+    var telInput = document.getElementById("email");
+    telInput.addEventListener("input", function() {
+        var v = this.value.replace(/\D/g, "");
+        var mask = "";
+        if (v.length > 0) mask = "(" + v.substring(0,2);
+        if (v.length >= 3) mask += ") " + v.substring(2,7);
+        if (v.length >= 8) mask += "-" + v.substring(7,11);
+        this.value = mask;
+    });
+    telInput.addEventListener("blur", function() {
+        var digits = this.value.replace(/\D/g, "");
+        var erro = document.getElementById("email-erro");
+        if (digits.length < 11) {
+            this.classList.add("is-invalid");
+            erro.style.display = "block";
+        } else {
+            this.classList.remove("is-invalid");
+            erro.style.display = "none";
+        }
+    });
 });
-</script> 
+</script>

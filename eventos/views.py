@@ -80,16 +80,6 @@ def autocomplete_cursos(request):
     sugestoes = [f"{curso.nome} ({curso.modalidade})" for curso in cursos]
     return JsonResponse(sugestoes, safe=False)
 
-def inscricao_curso(request, curso_id):
-    # ... seu código para buscar o curso ...
-    vagas_disponiveis = curso.vagas_disponiveis  # ou como você calcula isso
-
-    context = {
-        'form': form,
-        'vagas_disponiveis': vagas_disponiveis,
-        # outros contextos...
-    }
-    return render(request, 'eventos/inscricao_curso.html', context)
 
 def dados_curso(request):
     nome_curso = request.GET.get('nome_curso')
@@ -199,4 +189,4 @@ def inscricao_publico(request, evento_id):
         'total_inscritos': total_inscritos,
         'vagas_disponiveis': (limite_valor - total_inscritos) if limite_valor is not None else None,
         'esgotado': esgotado,
-    }) 
+    })
