@@ -81,7 +81,7 @@ class Curso(models.Model):
     nome_completo = models.CharField("Nome completo", max_length=200)
     idade = models.PositiveIntegerField("Idade")
     matricula = models.CharField("Matrícula", max_length=20)
-    email = models.EmailField("Contato")
+    email = models.CharField("Contato", max_length=254, blank=True, null=True)
     ocupacao = models.CharField("Ocupação", max_length=100)
     coordenador = models.CharField("Coordenador(a)", max_length=200)
 
@@ -101,7 +101,7 @@ class ConvidadoEspecial(models.Model):
     recebeu_convite_de = models.CharField(
         "Recebeu o convite de quem", max_length=200)
     senha_especial = models.CharField("Senha especial", max_length=100)
-    email = models.EmailField("Contato", max_length=254, blank=True, null=True)
+    email = models.CharField("Contato", max_length=254, blank=True, null=True)
 
     class Meta:
         verbose_name = "Convidado(a) Especial"
@@ -115,7 +115,7 @@ class PublicoGeral(models.Model):
     nome_completo = models.CharField("Nome completo", max_length=200)
     idade = models.PositiveIntegerField("Idade")
     ocupacao = models.CharField("Ocupação", max_length=100)
-    email = models.EmailField("Contato", max_length=254, blank=True, null=True)
+    email = models.CharField("Contato", max_length=254, blank=True, null=True)
 
     class Meta:
         verbose_name = "Público Geral"
