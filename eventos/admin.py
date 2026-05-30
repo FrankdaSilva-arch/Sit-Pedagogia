@@ -8,7 +8,10 @@ from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django import forms
 from django.shortcuts import render, redirect
+from django.http import HttpResponse
 from .widgets import CoordenadorAutocompleteWidget
+import openpyxl
+from openpyxl.styles import Font, PatternFill, Alignment
 
 FONTS_DIR = '/home/FRANKPED2026/Sit-Pedagogia/static/fonts/'
 
@@ -24,6 +27,65 @@ FONTE_MAP = {
     'DejaVu Serif':         '/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf',
     'DejaVu Serif Bold':    '/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf',
 }
+
+
+def exportar_excel(queryset, nome_arquivo, colunas, dados_func):
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Inscritos"
+
+    # Estilo do cabeçalho
+    header_font = Font(bold=True, color="FFFFFF")
+    header_fill = PatternFill(start_color="417690", end_color="417690", fill_type="solid")
+    header_align = Alignment(horizontal="center", vertical="center")
+
+    # Escreve cabeçalho
+    for col, titulo in enumerate(colunas, 1):
+        cell = ws.cell(row=1, column=col, value=titulo)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = header_align
+        ws.column_dimensions[cell.column_letter].width = 20
+
+    # Escreve dados
+    for row, obj in enumerate(queryset, 2):
+        for col, valor in enumerate(dados_func(obj), 1):
+            ws.cell(row=row, column=col, value=valor)
+
+    # Retorna resposta HTTP
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename="{}"'.format(nome_arquivo)
+    wb.save(response)
+    return response
+
+
+def exportar_cursos_excel(modeladmin, request, queryset):
+    colunas = ['ID', 'Nome do Curso', 'Nome Completo', 'Idade', 'Matricula', 'Contato', 'Ocupacao', 'Coordenador']
+    def dados(obj):
+        return [obj.id, obj.nome_curso, obj.nome_completo, obj.idade, obj.matricula, obj.email, obj.ocupacao, obj.coordenador]
+    return exportar_excel(queryset, 'inscritos_cursos.xlsx', colunas, dados)
+
+exportar_cursos_excel.short_description = "Exportar selecionados para Excel"
+
+
+def exportar_convidados_excel(modeladmin, request, queryset):
+    colunas = ['ID', 'Nome Completo', 'Idade', 'Formacao', 'Ocupacao', 'Contato', 'Recebeu convite de', 'Senha especial']
+    def dados(obj):
+        return [obj.id, obj.nome_completo, obj.idade, obj.formacao, obj.ocupacao, obj.email, obj.recebeu_convite_de, obj.senha_especial]
+    return exportar_excel(queryset, 'inscritos_convidados.xlsx', colunas, dados)
+
+exportar_convidados_excel.short_description = "Exportar selecionados para Excel"
+
+
+def exportar_publico_excel(modeladmin, request, queryset):
+    colunas = ['ID', 'Nome Completo', 'Idade', 'Ocupacao', 'Contato']
+    def dados(obj):
+        return [obj.id, obj.nome_completo, obj.idade, obj.ocupacao, obj.email]
+    return exportar_excel(queryset, 'inscritos_publico_geral.xlsx', colunas, dados)
+
+exportar_publico_excel.short_description = "Exportar selecionados para Excel"
 
 
 class ImagemEventoInline(admin.TabularInline):
@@ -91,7 +153,7 @@ class CursoAdmin(admin.ModelAdmin):
     list_display = ('id', 'nome_curso', 'nome_completo', 'idade', 'matricula', 'email', 'ocupacao', 'coordenador')
     search_fields = ('nome_curso', 'nome_completo', 'matricula', 'email', 'coordenador')
     list_filter = ('coordenador', 'ocupacao', 'nome_curso')
-    actions = [resetar_cadastros]
+    actions = [resetar_cadastros, exportar_cursos_excel]
     fields = ('nome_curso', 'nome_completo', 'idade', 'matricula', 'email', 'ocupacao', 'coordenador')
 
 
@@ -100,7 +162,7 @@ class ConvidadoEspecialAdmin(admin.ModelAdmin):
     list_display = ('id', 'nome_completo', 'idade', 'formacao', 'ocupacao', 'email', 'recebeu_convite_de', 'senha_especial')
     search_fields = ('nome_completo', 'formacao', 'ocupacao', 'email', 'recebeu_convite_de')
     list_filter = ('formacao', 'ocupacao', 'email')
-    actions = [resetar_convidados]
+    actions = [resetar_convidados, exportar_convidados_excel]
 
 
 @admin.register(PublicoGeral)
@@ -108,7 +170,7 @@ class PublicoGeralAdmin(admin.ModelAdmin):
     list_display = ('id', 'nome_completo', 'idade', 'ocupacao', 'email')
     search_fields = ('nome_completo', 'ocupacao', 'email')
     list_filter = ('ocupacao', 'email')
-    actions = [resetar_publico_geral]
+    actions = [resetar_publico_geral, exportar_publico_excel]
 
 
 def resetar_cadastrodoscursos(modeladmin, request, queryset):
@@ -284,7 +346,6 @@ class CertificacaoAdmin(admin.ModelAdmin):
         from reportlab.lib.pagesizes import landscape
         from reportlab.pdfgen import canvas as pdf_canvas
         from reportlab.lib.utils import ImageReader
-        from django.http import HttpResponse
 
         cert = Certificacao.objects.get(pk=cert_id)
         formato = request.GET.get('formato', 'jpg')
